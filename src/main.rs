@@ -1,10 +1,7 @@
-mod routes;
-
 use actix_web::{App, HttpServer};
+use blog::routes::router;
 use dotenv::dotenv;
 use std::env;
-
-use routes::router;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {

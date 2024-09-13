@@ -1,3 +1,7 @@
 /target
 .env
 Cargo.lock
+
+# database files
+diesel.toml
+migrations/
