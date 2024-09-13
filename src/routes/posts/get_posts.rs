@@ -1,13 +1,6 @@
-use actix_web::{get, web::Json, HttpResponse};
-use serde::Serialize;
-
 use crate::{establish_connection, models::Post};
+use actix_web::{get, web::Json, HttpResponse};
 use diesel::prelude::*;
-
-#[derive(Serialize)]
-struct Posts {
-    posts: Vec<Post>,
-}
 
 #[get("")]
 pub async fn get_posts() -> HttpResponse {
@@ -18,11 +11,7 @@ pub async fn get_posts() -> HttpResponse {
         .filter(is_public.eq(true))
         .select(Post::as_select())
         .load(connection)
-        .expect("");
+        .expect("Error loading posts.");
 
-    let all_posts = Posts {
-        posts: query_result,
-    };
-
-    HttpResponse::Ok().json(Json(all_posts))
+    HttpResponse::Ok().json(Json(query_result))
 }

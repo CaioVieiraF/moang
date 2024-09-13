@@ -15,7 +15,7 @@ pub async fn create_post(new_post: Json<NewPost>) -> HttpResponse {
     let _query_result = diesel::insert_into(posts::table)
         .values(&new_post)
         .returning(Post::as_returning())
-        .get_result(connection);
+        .execute(connection);
 
     HttpResponse::Created().finish()
 }
