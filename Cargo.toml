@@ -8,3 +8,5 @@ actix-web = "4"
 dotenv = "0.15.0"
 serde = { version = "1", features = ["derive"]}
 diesel = { version = "2.2.0", features = ["postgres"] }
+tokio = { version = "1", features = ["full"] }
+validator = { version = "0.18.1", features = ["derive"] }
