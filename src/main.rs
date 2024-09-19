@@ -3,7 +3,7 @@ use blog::routes::router;
 use dotenv::dotenv;
 use std::env;
 
-#[actix_web::main]
+#[tokio::main]
 async fn main() -> std::io::Result<()> {
     dotenv().ok();
 

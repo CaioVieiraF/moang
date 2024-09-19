@@ -12,10 +12,13 @@ pub async fn create_post(new_post: Json<NewPost>) -> HttpResponse {
 
     let new_post = new_post.into_inner();
     let connection = &mut establish_connection();
-    let _query_result = diesel::insert_into(posts::table)
+    let query_result = diesel::insert_into(posts::table)
         .values(&new_post)
         .returning(Post::as_returning())
         .execute(connection);
 
-    HttpResponse::Created().finish()
+    match query_result {
+        Ok(_) => HttpResponse::Created().finish(),
+        Err(_) => HttpResponse::InternalServerError().finish(),
+    }
 }

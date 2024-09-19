@@ -7,7 +7,7 @@ mod make_public;
 use actix_web::{web, Scope};
 
 pub fn posts_router() -> Scope {
-    web::scope("")
+    web::scope("posts")
         .service(get_posts::get_posts)
         .service(create_post::create_post)
         .service(get_post::get_post)

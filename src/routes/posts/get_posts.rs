@@ -10,8 +10,10 @@ pub async fn get_posts() -> HttpResponse {
     let query_result = posts
         .filter(is_public.eq(true))
         .select(Post::as_select())
-        .load(connection)
-        .expect("Error loading posts.");
+        .load(connection);
 
-    HttpResponse::Ok().json(Json(query_result))
+    match query_result {
+        Ok(retreived_posts) => HttpResponse::Ok().json(Json(retreived_posts)),
+        Err(_) => HttpResponse::InternalServerError().finish(),
+    }
 }
