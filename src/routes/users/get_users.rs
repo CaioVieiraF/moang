@@ -11,11 +11,11 @@ pub async fn get_users() -> HttpResponse {
 
     match query_result {
         Ok(retreived_users) => {
-            let user_names = retreived_users
+            let _user_names = retreived_users
                 .iter()
                 .map(|user| user.name.to_owned())
                 .collect::<Vec<String>>();
-            HttpResponse::Ok().json(Json(user_names))
+            HttpResponse::Ok().json(Json(retreived_users))
         }
         Err(_) => HttpResponse::InternalServerError().finish(),
     }

@@ -1,4 +1,4 @@
-use actix_web::{options, post, web::Json, HttpResponse};
+use actix_web::{post, web::Json, HttpResponse};
 use diesel::{prelude::Insertable, RunQueryDsl, SelectableHelper};
 use serde::Deserialize;
 use validator::Validate;
@@ -17,7 +17,22 @@ struct NewUser {
 #[post("")]
 pub async fn create_user(new_user: Json<NewUser>) -> HttpResponse {
     use crate::schema::users;
-    let new_user = new_user.into_inner();
+    let mut new_user = new_user.into_inner();
+
+    if new_user.validate().is_err() {
+        return HttpResponse::InternalServerError().finish();
+    }
+
+    let entropy = b"some_entropy_to_hash_the_password";
+    let argon_config = argon2::Config::default();
+    let hashed_password =
+        argon2::hash_encoded(new_user.password.as_bytes(), entropy, &argon_config);
+
+    if hashed_password.is_err() {
+        return HttpResponse::InternalServerError().finish();
+    }
+
+    new_user.password = hashed_password.unwrap();
 
     let connection = &mut establish_connection();
     let query_result = diesel::insert_into(users::table)
@@ -25,21 +40,8 @@ pub async fn create_user(new_user: Json<NewUser>) -> HttpResponse {
         .returning(User::as_returning())
         .execute(connection);
 
-    match query_result {
-        Ok(_) => match new_user.validate() {
-            Ok(_) => HttpResponse::Created().finish(),
-            Err(_) => HttpResponse::InternalServerError().finish(),
-        },
-        Err(_) => HttpResponse::InternalServerError().finish(),
-    }
-}
-
-#[options("")]
-pub async fn validate_create_user(new_user: Json<NewUser>) -> HttpResponse {
-    let new_user = new_user.into_inner();
-
-    if new_user.email.len() > 1 {
-        HttpResponse::Ok().finish()
+    if query_result.is_ok() {
+        HttpResponse::Created().finish()
     } else {
         HttpResponse::InternalServerError().finish()
     }
