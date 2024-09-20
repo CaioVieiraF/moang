@@ -11,7 +11,8 @@ diesel::table! {
 
 diesel::table! {
     users (id) {
-        id -> Int4,
+        #[max_length = 36]
+        id -> Varchar,
         name -> Varchar,
         email -> Varchar,
         password -> Text,

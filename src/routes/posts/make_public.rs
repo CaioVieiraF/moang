@@ -1,10 +1,14 @@
-use crate::{establish_connection, models::Post};
-use actix_web::{put, web::Path, HttpResponse};
+use crate::{establish_connection, models::Post, user_is_loged_in};
+use actix_web::{put, web::Path, HttpRequest, HttpResponse};
 use diesel::prelude::*;
 
 #[put("/{post_id}/make_public")]
-pub async fn make_public(path: Path<i32>) -> HttpResponse {
+pub async fn make_public(request: HttpRequest, path: Path<i32>) -> HttpResponse {
     use crate::schema::posts::dsl::*;
+
+    if !user_is_loged_in(request.headers()) {
+        return HttpResponse::Unauthorized().finish();
+    }
 
     let connection = &mut establish_connection();
     let post_id = path.into_inner();

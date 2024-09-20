@@ -1,6 +1,13 @@
 use crate::{establish_connection, models::User};
 use actix_web::{get, web::Json, HttpResponse};
 use diesel::{query_dsl::methods::SelectDsl, RunQueryDsl, SelectableHelper};
+use serde::Serialize;
+
+#[derive(Serialize)]
+struct UserInfo {
+    id: String,
+    name: String,
+}
 
 #[get("")]
 pub async fn get_users() -> HttpResponse {
@@ -11,11 +18,14 @@ pub async fn get_users() -> HttpResponse {
 
     match query_result {
         Ok(retreived_users) => {
-            let _user_names = retreived_users
+            let user_names = retreived_users
                 .iter()
-                .map(|user| user.name.to_owned())
-                .collect::<Vec<String>>();
-            HttpResponse::Ok().json(Json(retreived_users))
+                .map(|user| UserInfo {
+                    id: user.id.to_owned(),
+                    name: user.name.to_owned(),
+                })
+                .collect::<Vec<UserInfo>>();
+            HttpResponse::Ok().json(Json(user_names))
         }
         Err(_) => HttpResponse::InternalServerError().finish(),
     }

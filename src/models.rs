@@ -20,12 +20,19 @@ pub struct NewPost {
     pub is_public: bool,
 }
 
-#[derive(Queryable, Selectable, Serialize)]
+#[derive(Queryable, Selectable, Serialize, Insertable)]
 #[diesel(table_name = crate::schema::users)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct User {
-    pub id: i32,
+    pub id: String,
     pub name: String,
     pub email: String,
     pub password: String,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct Claims {
+    pub exp: usize,
+    pub sub: String,
+    pub iat: usize,
 }
