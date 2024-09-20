@@ -1,18 +1,11 @@
 use std::env;
 
-use crate::establish_connection;
+use crate::{establish_connection, models::Claims};
 use actix_web::{get, web::Json, HttpResponse};
 use diesel::{ExpressionMethods, OptionalExtension, QueryDsl, RunQueryDsl};
 use dotenv::dotenv;
 use jsonwebtoken::{EncodingKey, Header};
 use serde::{Deserialize, Serialize};
-
-#[derive(Serialize, Deserialize)]
-struct Claims {
-    exp: usize,
-    sub: String,
-    iat: usize,
-}
 
 #[derive(Serialize, Deserialize)]
 struct LoginData {

@@ -13,3 +13,4 @@ validator = { version = "0.18.1", features = ["derive"] }
 chrono = "0.4"
 jsonwebtoken = "9"
 rust-argon2 = "2.1"
+uuid = { version = "1", features = ["v4"] }

@@ -14,6 +14,6 @@ pub async fn get_posts() -> HttpResponse {
 
     match query_result {
         Ok(retreived_posts) => HttpResponse::Ok().json(Json(retreived_posts)),
-        Err(_) => HttpResponse::InternalServerError().finish(),
+        Err(e) => HttpResponse::InternalServerError().body(format!("Server error: {e}")),
     }
 }
