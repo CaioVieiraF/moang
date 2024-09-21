@@ -5,10 +5,7 @@ pub mod schema;
 use core::panic;
 use std::env;
 
-use actix_web::{
-    http::header::{HeaderMap, HeaderValue},
-    HttpResponse,
-};
+use actix_web::http::header::{HeaderMap, HeaderValue};
 use diesel::prelude::*;
 use dotenv::dotenv;
 use jsonwebtoken::{DecodingKey, Validation};
@@ -23,22 +20,18 @@ fn establish_connection() -> PgConnection {
 }
 
 fn validate_user(auth_header: &HeaderValue) -> Option<bool> {
-    if let Ok(auth_token) = auth_header.to_str() {
-        if auth_token.starts_with("Bearer ") {
-            let token = auth_token.trim_start_matches("Bearer ");
+    if let Ok(auth_header) = auth_header.to_str() {
+        if auth_header.starts_with("Bearer ") {
+            let token = auth_header.trim_start_matches("Bearer ");
             let secret = env::var("JWT_HASH").expect("JWT_HASH missing!");
 
-            if jsonwebtoken::decode::<Claims>(
+            let is_user_valid = jsonwebtoken::decode::<Claims>(
                 token,
                 &DecodingKey::from_secret(secret.as_ref()),
                 &Validation::default(),
             )
-            .is_ok()
-            {
-                return Some(true);
-            } else {
-                return Some(false);
-            }
+            .is_ok();
+            return Some(is_user_valid);
         }
     }
 

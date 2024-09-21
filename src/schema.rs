@@ -6,6 +6,8 @@ diesel::table! {
         title -> Varchar,
         body -> Text,
         is_public -> Bool,
+        #[max_length = 36]
+        author -> Varchar,
     }
 }
 
@@ -18,6 +20,8 @@ diesel::table! {
         password -> Text,
     }
 }
+
+diesel::joinable!(posts -> users (author));
 
 diesel::allow_tables_to_appear_in_same_query!(
     posts,

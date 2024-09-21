@@ -10,6 +10,7 @@ pub struct Post {
     pub title: String,
     pub body: String,
     pub is_public: bool,
+    pub author: String,
 }
 
 #[derive(Insertable, Deserialize)]
@@ -18,6 +19,7 @@ pub struct NewPost {
     pub title: String,
     pub body: String,
     pub is_public: bool,
+    pub author: String,
 }
 
 #[derive(Queryable, Selectable, Serialize, Insertable)]

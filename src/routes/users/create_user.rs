@@ -1,10 +1,10 @@
-use actix_web::{post, web::Json, HttpRequest, HttpResponse};
+use actix_web::{post, web::Json, HttpResponse};
 use diesel::{RunQueryDsl, SelectableHelper};
 use serde::Deserialize;
 use uuid::Uuid;
 use validator::Validate;
 
-use crate::{establish_connection, models::User, user_is_loged_in};
+use crate::{establish_connection, models::User};
 
 #[derive(Deserialize, Validate)]
 struct NewUserRequest {
@@ -15,12 +15,8 @@ struct NewUserRequest {
 }
 
 #[post("")]
-pub async fn create_user(request: HttpRequest, request_data: Json<NewUserRequest>) -> HttpResponse {
+pub async fn create_user(request_data: Json<NewUserRequest>) -> HttpResponse {
     use crate::schema::users;
-
-    if !user_is_loged_in(request.headers()) {
-        return HttpResponse::Unauthorized().finish();
-    }
 
     let request_data_user = request_data.into_inner();
 
