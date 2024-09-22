@@ -6,6 +6,7 @@ diesel::table! {
         title -> Varchar,
         body -> Text,
         is_public -> Bool,
+        slug -> Varchar,
         #[max_length = 36]
         author -> Varchar,
     }

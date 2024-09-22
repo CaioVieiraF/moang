@@ -10,6 +10,7 @@ pub struct Post {
     pub title: String,
     pub body: String,
     pub is_public: bool,
+    pub slug: String,
     pub author: String,
 }
 
@@ -19,6 +20,7 @@ pub struct NewPost {
     pub title: String,
     pub body: String,
     pub is_public: bool,
+    pub slug: String,
     pub author: String,
 }
 

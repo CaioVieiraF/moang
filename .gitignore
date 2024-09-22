@@ -8,3 +8,4 @@ migrations/
 
 # Gemini
 .certificates/
+content/*-post.gmi
