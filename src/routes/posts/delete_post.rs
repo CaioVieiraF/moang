@@ -15,7 +15,15 @@ pub async fn delete_post(request: HttpRequest, path: Path<i32>) -> HttpResponse 
     let query_result = diesel::delete(posts.find(post_id)).execute(connection);
 
     match query_result {
-        Ok(_) => HttpResponse::Ok().finish(),
+        Ok(_) => {
+            let _ = delete_gemini_post(post_id).await;
+            HttpResponse::Ok().finish()
+        }
         Err(_) => HttpResponse::InternalServerError().finish(),
     }
+}
+
+async fn delete_gemini_post(post_id: i32) -> tokio::io::Result<()> {
+    use tokio::fs::remove_file;
+    remove_file(format!("{post_id}.gmi")).await
 }

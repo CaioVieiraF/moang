@@ -1,5 +1,3 @@
-use std::env;
-
 use crate::{
     establish_connection,
     models::{Claims, NewPost, Post},
@@ -9,6 +7,9 @@ use actix_web::{post, web::Json, HttpRequest, HttpResponse};
 use diesel::prelude::*;
 use jsonwebtoken::{DecodingKey, Validation};
 use serde::Deserialize;
+use slug::slugify;
+use std::env;
+use tokio::fs::{read_to_string, write};
 
 #[derive(Deserialize)]
 struct NewPostRequest {
@@ -58,9 +59,10 @@ pub async fn create_post(
 
     let new_post_request = new_post_request.into_inner();
     let new_post = NewPost {
-        title: new_post_request.title,
+        title: new_post_request.title.clone(),
         body: new_post_request.body,
         is_public: new_post_request.is_public,
+        slug: slugify(new_post_request.title),
         author: user_id_query.unwrap(),
     };
     let query_result = diesel::insert_into(posts::table)
@@ -69,8 +71,26 @@ pub async fn create_post(
         .execute(connection);
 
     if query_result.is_ok() {
-        HttpResponse::Created().finish()
+        let gemini_post = create_gemini_post(new_post).await;
+        if gemini_post.is_err() {
+            HttpResponse::InternalServerError().body("Error creating gemini post")
+        } else {
+            HttpResponse::Created().finish()
+        }
     } else {
-        HttpResponse::InternalServerError().finish()
+        HttpResponse::InternalServerError().body("Error creating post on DB")
     }
+}
+
+async fn create_gemini_post(post: NewPost) -> tokio::io::Result<()> {
+    let mut gemini_content = format!("# {}\n\n", &post.title);
+    gemini_content.push_str(&post.body);
+    gemini_content.push_str("\n\n=> /index.gmi HOME");
+    write(format!("content/{}.gmi", &post.slug), gemini_content).await?;
+
+    let mut gemini_index_content = read_to_string("content/index.gmi").await?;
+    gemini_index_content.push_str(format!("\n=> /{}.gmi {}", &post.slug, &post.title).as_str());
+    write("content/index.gmi", gemini_index_content).await?;
+
+    Ok(())
 }
