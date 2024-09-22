@@ -1,3 +1,4 @@
+# Rust
 /target
 .env
 Cargo.lock
@@ -9,3 +10,6 @@ migrations/
 # Gemini
 .certificates/
 content/*-post.gmi
+
+# Openssl
+*.pem

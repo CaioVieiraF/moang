@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-actix-web = "4"
+actix-web = { version = "4", features = ["openssl"] }
 dotenv = "0.15.0"
 serde = { version = "1", features = ["derive"]}
 diesel = { version = "2.2.0", features = ["postgres"] }
@@ -15,3 +15,4 @@ jsonwebtoken = "9"
 rust-argon2 = "2.1"
 uuid = { version = "1", features = ["v4"] }
 slug = "0.1.6"
+openssl = "0.10.66"
