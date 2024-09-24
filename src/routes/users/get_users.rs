@@ -5,7 +5,6 @@ use serde::Serialize;
 
 #[derive(Serialize)]
 struct UserInfo {
-    id: String,
     name: String,
 }
 
@@ -21,7 +20,6 @@ pub async fn get_users() -> HttpResponse {
             let user_names = retreived_users
                 .iter()
                 .map(|user| UserInfo {
-                    id: user.id.to_owned(),
                     name: user.name.to_owned(),
                 })
                 .collect::<Vec<UserInfo>>();
