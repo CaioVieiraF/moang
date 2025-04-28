@@ -1,6 +1,7 @@
 use std::env;
 
 use crate::{establish_connection, models::Claims};
+use actix_session::Session;
 use actix_web::{get, web::Json, HttpResponse};
 use diesel::{ExpressionMethods, OptionalExtension, QueryDsl, RunQueryDsl};
 use dotenv::dotenv;
@@ -39,8 +40,16 @@ fn is_password_valid(hashed_password: String, password_to_verify: String) -> Opt
 }
 
 #[get("/login")]
-async fn login(request_data: Json<LoginData>) -> HttpResponse {
+async fn login(session: Session, request_data: Json<LoginData>) -> HttpResponse {
     use crate::schema::users::dsl::*;
+
+    if let Ok(session_cookie) = session.get::<String>("user_identity") {
+        if let Some(_cookie) = session_cookie {
+            return HttpResponse::NoContent().finish();
+        }
+    } else {
+        return HttpResponse::InternalServerError().body("Error retrieving session cookie");
+    }
 
     let login_data = request_data.into_inner();
 
@@ -63,8 +72,12 @@ async fn login(request_data: Json<LoginData>) -> HttpResponse {
                     let generate_token = generate_token(my_claims);
                     match generate_token {
                         Ok(token) => {
-                            let response = SuccessResponse { token };
-                            HttpResponse::Ok().json(response)
+                            if session.insert("user_identity", token.clone()).is_err() {
+                                let _response = SuccessResponse { token };
+                                return HttpResponse::InternalServerError()
+                                    .body("Error setting the session cookie");
+                            }
+                            HttpResponse::Ok().finish()
                         }
                         Err(_) => HttpResponse::InternalServerError().finish(),
                     }

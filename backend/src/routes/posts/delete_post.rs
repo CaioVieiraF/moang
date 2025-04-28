@@ -1,5 +1,6 @@
 use crate::{establish_connection, models::Post, user_is_loged_in};
-use actix_web::{delete, web::Path, HttpRequest, HttpResponse};
+use actix_session::Session;
+use actix_web::{delete, web::Path, HttpResponse};
 use diesel::prelude::*;
 use tokio::{
     fs::{read_to_string, remove_file, File},
@@ -7,10 +8,10 @@ use tokio::{
 };
 
 #[delete("/{post_id}")]
-pub async fn delete_post(request: HttpRequest, path: Path<i32>) -> HttpResponse {
+pub async fn delete_post(session: Session, path: Path<i32>) -> HttpResponse {
     use crate::schema::posts::dsl::*;
 
-    if !user_is_loged_in(request.headers()) {
+    if !user_is_loged_in(&session) {
         return HttpResponse::Unauthorized().finish();
     }
 

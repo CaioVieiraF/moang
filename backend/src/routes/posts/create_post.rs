@@ -3,6 +3,7 @@ use crate::{
     models::{Claims, NewPost, Post},
     user_is_loged_in,
 };
+use actix_session::Session;
 use actix_web::{post, web::Json, HttpRequest, HttpResponse};
 use diesel::prelude::*;
 use jsonwebtoken::{DecodingKey, Validation};
@@ -19,23 +20,15 @@ struct NewPostRequest {
 }
 
 #[post("")]
-pub async fn create_post(
-    request: HttpRequest,
-    new_post_request: Json<NewPostRequest>,
-) -> HttpResponse {
+pub async fn create_post(session: Session, new_post_request: Json<NewPostRequest>) -> HttpResponse {
     use crate::schema::posts;
     use crate::schema::users::dsl::*;
 
-    if !user_is_loged_in(request.headers()) {
+    if !user_is_loged_in(&session) {
         return HttpResponse::Unauthorized().finish();
     }
 
-    let token = request
-        .headers()
-        .get("Authorization")
-        .unwrap()
-        .to_str()
-        .unwrap();
+    let token = session.get::<String>("user_identity").unwrap().unwrap();
 
     let token_secret = env::var("JWT_HASH").expect("JWT_HASH not set!");
     let user_email = jsonwebtoken::decode::<Claims>(

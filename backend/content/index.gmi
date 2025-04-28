@@ -19,3 +19,7 @@ aleatórias, desenvolvimento de jogos e outras coisas
 sobre tecnologia.
 
 ## Postagens
+
+=> /primeiro-post.gmi Primeiro post
+=> /segundo-post.gmi Segundo post
+=> /teste-post.gmi Teste post

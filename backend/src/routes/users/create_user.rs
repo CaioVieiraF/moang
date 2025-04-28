@@ -1,3 +1,4 @@
+use actix_session::Session;
 use actix_web::{post, web::Json, HttpRequest, HttpResponse};
 use diesel::{RunQueryDsl, SelectableHelper};
 use serde::Deserialize;
@@ -15,10 +16,10 @@ struct NewUserRequest {
 }
 
 #[post("")]
-pub async fn create_user(request: HttpRequest, request_data: Json<NewUserRequest>) -> HttpResponse {
+pub async fn create_user(session: Session, request_data: Json<NewUserRequest>) -> HttpResponse {
     use crate::schema::users;
 
-    if !user_is_loged_in(request.headers()) {
+    if !user_is_loged_in(&session) {
         return HttpResponse::Unauthorized().finish();
     }
 

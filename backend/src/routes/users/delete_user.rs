@@ -1,12 +1,13 @@
 use crate::{establish_connection, user_is_loged_in};
-use actix_web::{delete, web::Path, HttpRequest, HttpResponse};
+use actix_session::Session;
+use actix_web::{delete, web::Path, HttpResponse};
 use diesel::prelude::*;
 
 #[delete("/{user_id}")]
-pub async fn delete_user(request: HttpRequest, path: Path<String>) -> HttpResponse {
+pub async fn delete_user(session: Session, path: Path<String>) -> HttpResponse {
     use crate::schema::users::dsl::*;
 
-    if !user_is_loged_in(request.headers()) {
+    if !user_is_loged_in(&session) {
         return HttpResponse::Unauthorized().finish();
     }
 
