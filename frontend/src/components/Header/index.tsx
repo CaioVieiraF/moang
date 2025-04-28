@@ -5,7 +5,7 @@ export function Header() {
 	return (
 		<HeaderContainer>
 			<nav>
-				<NavLink to="/" title="Home">Home</NavLink>
+				<NavLink to="/" title="Home">Moang</NavLink>
 			</nav>
 		</HeaderContainer>
 	)

@@ -1,3 +1,75 @@
 export const defaultTheme = {
 	white: '#FFF',
+
+	"text": "#e7fbf4",
+	"background": "#03110c",
+	"primary": "#86eace",
+	"secondary": "#175083",
+	"accent": "#fb9a37",
+
+
+	"text-50": "#e9fbf5",
+	"text-100": "#d3f8eb",
+	"text-200": "#a8f0d7",
+	"text-300": "#7ce9c3",
+	"text-400": "#51e1af",
+	"text-500": "#25da9b",
+	"text-600": "#1eae7c",
+	"text-700": "#16835d",
+	"text-800": "#0f573e",
+	"text-900": "#072c1f",
+	"text-950": "#04160f",
+
+	"background-50": "#e9fbf5",
+	"background-100": "#d4f7eb",
+	"background-200": "#a8f0d7",
+	"background-300": "#7de8c3",
+	"background-400": "#52e0ae",
+	"background-500": "#26d99a",
+	"background-600": "#1fad7b",
+	"background-700": "#17825d",
+	"background-800": "#0f573e",
+	"background-900": "#082b1f",
+	"background-950": "#04160f",
+
+	"primary-50": "#e9fbf6",
+	"primary-100": "#d4f7ed",
+	"primary-200": "#a8f0db",
+	"primary-300": "#7de8ca",
+	"primary-400": "#52e0b8",
+	"primary-500": "#26d9a6",
+	"primary-600": "#1fad85",
+	"primary-700": "#178264",
+	"primary-800": "#0f5742",
+	"primary-900": "#082b21",
+	"primary-950": "#041611",
+
+	"secondary-50": "#e9f3fb",
+	"secondary-100": "#d4e7f7",
+	"secondary-200": "#a8cef0",
+	"secondary-300": "#7db6e8",
+	"secondary-400": "#529ee0",
+	"secondary-500": "#2685d9",
+	"secondary-600": "#1f6bad",
+	"secondary-700": "#175082",
+	"secondary-800": "#0f3557",
+	"secondary-900": "#081b2b",
+	"secondary-950": "#040d16",
+
+	"accent-50": "#fef2e6",
+	"accent-100": "#fee6cd",
+	"accent-200": "#fdcc9b",
+	"accent-300": "#fcb369",
+	"accent-400": "#fb9937",
+	"accent-500": "#fa8005",
+	"accent-600": "#c86604",
+	"accent-700": "#964c03",
+	"accent-800": "#643302",
+	"accent-900": "#321a01",
+	"accent-950": "#190d01",
+
+
 };
+
+// Colors from Realtime Colors
+// https://www.realtimecolors.com/?colors=fbf4e5-161204-eace81-5fb003-67fc27&fonts=Inter-Inter
