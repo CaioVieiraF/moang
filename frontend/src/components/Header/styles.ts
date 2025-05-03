@@ -1,4 +1,4 @@
-import styled from "styled-components";
+import styled from 'styled-components'
 
 export const HeaderContainer = styled.header`
 	display: flex;
@@ -6,7 +6,6 @@ export const HeaderContainer = styled.header`
 	justify-content: center;
 	padding: 2rem;
 	border-bottom: 2px solid ${props => props.theme['primary-700']};
-	
 	nav {
 		display: flex;
 		gap: 0.5rem;
@@ -24,4 +23,4 @@ export const HeaderContainer = styled.header`
 		}
 
 	}
-`;
+`

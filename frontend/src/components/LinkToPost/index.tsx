@@ -1,15 +1,27 @@
-import { LinkContainer } from "./styles";
+import { Link } from 'react-router-dom'
+import { LinkContainer } from './styles'
+import { useContext } from 'react'
+import { PostsContext } from '../../layouts/contexts/PostsContext'
 
 interface LinkProps {
-	title: string,
-	content: string,
+  title: string,
+  content: string,
+  postID: number
 }
 
-export function LinkToPost({ title, content }: LinkProps) {
-	return (
-		<LinkContainer>
-			<h3>{title}</h3>
-			<p>{content}</p>
-		</LinkContainer>
-	)
+export function LinkToPost({ title, content, postID }: LinkProps) {
+  const { setPostTitle, setPostBody } = useContext(PostsContext)
+  function handleSelectPost() {
+    setPostTitle(title)
+    setPostBody(content)
+  }
+
+  return (
+    <Link to="/posts">
+      <LinkContainer onClick={handleSelectPost}>
+        <h3>#{postID} {title}</h3>
+        <p>{content}</p>
+      </LinkContainer>
+    </Link>
+  )
 }

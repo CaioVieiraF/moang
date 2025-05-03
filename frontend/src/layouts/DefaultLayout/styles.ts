@@ -1,4 +1,4 @@
-import styled from "styled-components";
+import styled from 'styled-components'
 
 export const LayoutContainer = styled.div`
 	margin: 2rem;
@@ -6,4 +6,4 @@ export const LayoutContainer = styled.div`
 	flex-direction: column;
 
 	justify-content: space-between;
-`;
+`

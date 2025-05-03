@@ -16,3 +16,4 @@ rust-argon2 = "2.1"
 uuid = { version = "1", features = ["v4"] }
 slug = "0.1.6"
 actix-session = { version = "0.10.1", features = ["cookie-session"] }
+actix-cors = "0.7.1"

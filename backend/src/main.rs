@@ -1,5 +1,6 @@
+use actix_cors::Cors;
 use actix_session::{storage::CookieSessionStore, SessionMiddleware};
-use actix_web::{cookie::Key, App, HttpServer};
+use actix_web::{cookie::Key, http, App, HttpServer};
 use blog::routes::router;
 use dotenv::dotenv;
 use std::env;
@@ -21,11 +22,20 @@ async fn main() -> std::io::Result<()> {
         .expect("Variável de ambiente inválida!");
 
     HttpServer::new(move || {
+        let cors = Cors::default()
+            .allowed_origin("https://www.moang.com.br")
+            .allowed_origin("http://localhost:5173")
+            .allowed_methods(vec!["GET", "POST"])
+            .allowed_headers(vec![http::header::AUTHORIZATION, http::header::ACCEPT])
+            .allowed_header(http::header::CONTENT_TYPE)
+            .max_age(3600);
+
         App::new()
             .wrap(SessionMiddleware::new(
                 CookieSessionStore::default(),
                 cookie_key.clone(),
             ))
+            .wrap(cors)
             .service(router())
     })
     .bind((blog_address.as_str(), blog_port))?

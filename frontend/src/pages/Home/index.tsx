@@ -1,29 +1,24 @@
-import { useState } from "react";
-import { HomeContainer } from "./styles";
-import { LinkToPost } from "../../components/LinkToPost";
+import { useEffect, useState } from 'react'
+import { HomeContainer } from './styles'
+import { LinkToPost } from '../../components/LinkToPost'
 
 interface Post {
-	title: string,
-	content: string,
+  id: number,
+  title: string,
+  body: string,
 }
 
 export function Home() {
-	const [posts,] = useState<Post[]>([
-		{
-			title: "#1 Post",
-			content: "Post test",
-		}, {
-			title: "#2 Post",
-			content: "Post test",
-		}, {
-			title: "#3 Post",
-			content: "Post test",
-		},
+  const [posts, setPosts] = useState<Post[]>([])
 
-	])
-	return (
-		<HomeContainer>
-			{posts.map(post => <LinkToPost title={post.title} content={post.content} />)}
-		</HomeContainer>
-	);
+  useEffect(() => {
+    fetch('http://localhost:5000/api/posts').then(response => response.json()).then(data => {
+      setPosts(data)
+    })
+  }, [])
+  return (
+    <HomeContainer>
+      {posts.map(post => <LinkToPost key={post.id} postID={post.id} title={post.title} content={post.body} />)}
+    </HomeContainer>
+  )
 }

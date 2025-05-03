@@ -1,4 +1,4 @@
-import styled from "styled-components";
+import styled from 'styled-components'
 
 export const HomeContainer = styled.main`
 	max-width: 76rem;
@@ -9,4 +9,4 @@ export const HomeContainer = styled.main`
 
 	border-radius: 3px;
 	background: ${props => props.theme['primary-900']};
-`;
+`

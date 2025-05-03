@@ -1,6 +1,10 @@
-import styled from "styled-components";
+import styled from 'styled-components'
 
 export const FooterContainer = styled.footer`
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -17,4 +21,4 @@ export const FooterContainer = styled.footer`
 			background: ${props => props.theme['accent-200']};
 		}
 	}
-`;
+`
