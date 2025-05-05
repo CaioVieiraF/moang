@@ -5,7 +5,8 @@ export const HeaderContainer = styled.header`
 	align-items: center;
 	justify-content: center;
 	padding: 2rem;
-	border-bottom: 2px solid ${props => props.theme['primary-700']};
+	border-bottom: 1px solid ${props => props.theme['secondary-800']};
+	background: ${props => props.theme['secondary-950']};
 	nav {
 		display: flex;
 		gap: 0.5rem;

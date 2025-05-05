@@ -18,7 +18,9 @@ export function Home() {
   }, [])
   return (
     <HomeContainer>
-      {posts.map(post => <LinkToPost key={post.id} postID={post.id} title={post.title} content={post.body} />)}
+      <ul>
+        {posts.map(post => <LinkToPost key={post.id} postID={post.id} title={post.title} content={post.body} />)}
+      </ul>
     </HomeContainer>
   )
 }

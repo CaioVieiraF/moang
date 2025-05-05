@@ -20,7 +20,6 @@ export function LinkToPost({ title, content, postID }: LinkProps) {
     <Link to="/posts">
       <LinkContainer onClick={handleSelectPost}>
         <h3>#{postID} {title}</h3>
-        <p>{content}</p>
       </LinkContainer>
     </Link>
   )

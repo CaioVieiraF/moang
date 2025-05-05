@@ -1,6 +1,6 @@
 import styled from 'styled-components'
 
-export const PostContainer = styled.main`
+export const PostContainer = styled.div`
 	max-width: 76rem;
 	height: 100%;
 	width: 100%;
@@ -8,6 +8,8 @@ export const PostContainer = styled.main`
 	padding: 2.5rem;
 
 	border-radius: 3px;
+  border: 1px solid ${props => props.theme['secondary-900']};
+  background: ${props => props.theme['secondary-950']};
 
   .titleArea {
     display: flex;

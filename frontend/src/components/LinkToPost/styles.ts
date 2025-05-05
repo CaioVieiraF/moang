@@ -1,20 +1,15 @@
 import styled from 'styled-components'
 
-export const LinkContainer = styled.div`
-border-bottom: 1px solid ${props => props.theme['primary-800']};
+export const LinkContainer = styled.li`
+border-bottom: 1px solid ${props => props.theme['secondary-800']};
 padding: 2rem;
 
-&:first-child {
-	border-top: 1px solid ${props => props.theme['primary-800']};
-}
 
 a {
   text-decoration: none;
 }
 
-p {
-	color: ${props => props.theme['primary-800']};
-}
+
 
 h3 {
 	text-decoration-line: underline;
