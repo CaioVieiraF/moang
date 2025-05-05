@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
-import { HomeContainer } from './styles'
+import { HomeContainer, HomePostsContainer } from './styles'
 import { LinkToPost } from '../../components/LinkToPost'
+import { Banner } from '../../components/Banner'
 
 interface Post {
   id: number,
@@ -18,9 +19,12 @@ export function Home() {
   }, [])
   return (
     <HomeContainer>
-      <ul>
-        {posts.map(post => <LinkToPost key={post.id} postID={post.id} title={post.title} content={post.body} />)}
-      </ul>
+      <Banner />
+      <HomePostsContainer>
+        <ul>
+          {posts.map(post => <LinkToPost key={post.id} postID={post.id} title={post.title} content={post.body} />)}
+        </ul>
+      </HomePostsContainer>
     </HomeContainer>
   )
 }

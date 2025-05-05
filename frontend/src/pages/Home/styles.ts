@@ -1,13 +1,15 @@
 import styled from 'styled-components'
 
-export const HomeContainer = styled.div`
+export const HomeContainer = styled.main`
 	max-width: 76rem;
 	height: 100%;
 	width: 100%;
 	margin: 5rem auto;
-	padding: 2.5rem;
-
 	border-radius: 3px;
+`
+export const HomePostsContainer = styled.div`
+  margin-top: 2rem;
+	padding: 2.5rem;
 	border: 1px solid ${props => props.theme['primary-800']};
 	background: ${props => props.theme['primary-900']};
 
