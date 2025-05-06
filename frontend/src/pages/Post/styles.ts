@@ -4,12 +4,12 @@ export const PostContainer = styled.div`
 	max-width: 76rem;
 	height: 100%;
 	width: 100%;
-	margin: 5rem auto;
+	margin: -3rem auto;
 	padding: 2.5rem;
 
 	border-radius: 3px;
   border: 1px solid ${props => props.theme['secondary-900']};
-  background: ${props => props.theme['secondary-950']};
+  background: ${props => props.theme['secondary-700']};
 
   .titleArea {
     display: flex;
@@ -20,7 +20,7 @@ export const PostContainer = styled.div`
 
   a {
     text-decoration: none;
-    color: ${props => props.theme['secondary']};
+    color: ${props => props.theme['accent']};
   }
 
   article {
