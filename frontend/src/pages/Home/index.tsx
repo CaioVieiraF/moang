@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react'
-import { HomeContainer, HomePostsContainer } from './styles'
+import { HomeContainer, HomePostsContainer, Title } from './styles'
 import { LinkToPost } from '../../components/LinkToPost'
+import { api } from '../../lib/axios'
+import { Banner } from '../../components/Banner'
+import { SearchPosts } from '../../components/SearchPosts'
 
 interface Post {
   id: number,
@@ -11,14 +14,23 @@ interface Post {
 export function Home() {
   const [posts, setPosts] = useState<Post[]>([])
 
+  async function getPosts() {
+    const response = await api.get('posts')
+    setPosts(response.data)
+  }
+
   useEffect(() => {
-    fetch('http://localhost:5000/api/posts').then(response => response.json()).then(data => {
-      setPosts(data)
-    })
+    getPosts()
   }, [])
   return (
     <HomeContainer>
+      <Banner />
       <HomePostsContainer>
+        <Title>
+          <h2>Publicações</h2>
+          <small>{posts.length} publicações</small>
+        </Title>
+        <SearchPosts />
         <ul>
           {posts.map(post => <LinkToPost key={post.id} postID={post.id} title={post.title} content={post.body} />)}
         </ul>

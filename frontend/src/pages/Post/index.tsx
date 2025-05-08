@@ -9,10 +9,10 @@ export function Post() {
   return (
     <PostContainer>
       <div className="titleArea">
+        <Link to="/">{'< Voltar'}</Link>
         <h1>{title}</h1>
       </div>
       <article>{body}</article>
-      <Link to="/">{'< Voltar'}</Link>
     </PostContainer>
   )
 }

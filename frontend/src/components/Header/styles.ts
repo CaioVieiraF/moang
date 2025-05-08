@@ -6,7 +6,7 @@ export const HeaderContainer = styled.header`
 	justify-content: center;
 	padding: 2.5rem 0 7.5rem;
 	border-bottom: 1px solid ${props => props.theme['secondary-800']};
-	background: ${props => props.theme['secondary-950']};
+	background: ${props => props.theme['primary-700']};
 	nav {
 		display: flex;
 		gap: 0.5rem;
