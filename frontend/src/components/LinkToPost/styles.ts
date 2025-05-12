@@ -1,23 +1,29 @@
+import { Link } from 'react-router-dom'
 import styled from 'styled-components'
 
-export const LinkContainer = styled.li`
+export const LinkContainer = styled(Link)`
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  text-decoration: none;
+
   background: ${props => props.theme['secondary-900']};
-  border-radius: 3px;
+  border-top: 2px solid transparent;
+  border-bottom: 2px solid transparent;
   margin-bottom: 1rem;
   padding: 2rem;
 
-  a {
+  h3 {
+    color: ${props => props.theme['text']};
     text-decoration: none;
   }
 
-  h3 {
-    color: ${props => props.theme['accent-200']};
-  }
-
-  h3:hover {
+  &:hover {
     cursor: pointer;
-    color: ${props => props.theme['text-100']};
-    text-decoration-line: underline;
+    font-weight: bold;
+    background: ${props => props.theme['secondary-800']};
+
+    border-bottom: 2px solid ${props => props.theme['primary-600']};
   }
 
 `

@@ -1,5 +1,5 @@
 import { useContext } from 'react'
-import { PostContainer } from './styles'
+import { PostContainer, PostTitle } from './styles'
 import { PostsContext } from '../../layouts/contexts/PostsContext'
 import { Link } from 'react-router-dom'
 
@@ -8,10 +8,10 @@ export function Post() {
 
   return (
     <PostContainer>
-      <div className="titleArea">
+      <PostTitle>
         <Link to="/">{'< Voltar'}</Link>
         <h1>{title}</h1>
-      </div>
+      </PostTitle>
       <article>{body}</article>
     </PostContainer>
   )

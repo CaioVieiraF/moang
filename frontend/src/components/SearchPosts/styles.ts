@@ -9,12 +9,17 @@ export const SearchPostsContainer = styled.form`
     flex: 1;
     border-radius: 3px;
     border: 0;
+    border: 1px solid ${props => props.theme['primary-700']};
     background: ${props => props.theme['primary-900']};
     color: ${props => props.theme['text-300']};
     padding: 1rem;
 
     &::placeholder {
       color: ${props => props.theme['text-700']};
+    }
+
+    &:disabled {
+      cursor: not-allowed;
     }
   }
 
