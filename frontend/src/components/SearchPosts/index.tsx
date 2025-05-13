@@ -16,13 +16,14 @@ export function SearchPosts() {
   })
 
   function handleSearch(data: SearchFormSchemaType) {
+    console.log(data)
     // TODO implementar busca de post por título no backend
   }
 
   return (
     <SearchPostsContainer onSubmit={handleSubmit(handleSearch)}>
-      <input type="text" placeholder="Buscar um post..." {...register('query')} disabled />
-      <button disabled><Search size={20} /> Buscar</button>
+      <input type="text" placeholder="Buscar um post..." {...register('query')} disabled={isSubmitting} />
+      <button disabled={isSubmitting}><Search size={20} /> Buscar</button>
     </SearchPostsContainer>
   )
 }
