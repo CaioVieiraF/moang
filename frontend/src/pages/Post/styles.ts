@@ -1,10 +1,11 @@
+import { Link } from 'react-router-dom'
 import styled from 'styled-components'
 
 export const PostContainer = styled.div`
   max-width: 76rem;
   height: 100%;
   width: 100%;
-  margin: -3rem auto;
+  margin: 2rem auto;
 
   article {
     margin: 2rem;
@@ -26,9 +27,19 @@ export const PostTitle = styled.div`
   background: ${props => props.theme['secondary-900']};
   border: 1px solid ${props => props.theme['secondary-800']};
 
-  a {
-    text-decoration: none;
-    color: ${props => props.theme['accent']};
+  small {
+    color: ${props => props.theme['secondary-500']};
   }
+`
 
+export const PostTitleBackLink = styled(Link)`
+  margin-right: auto;
+  text-decoration: none;
+  color: ${props => props.theme['accent']};
+
+  &:hover {
+    color: ${props => props.theme['primary-900']};
+    background: ${props => props.theme['accent-200']};
+    text-decoration: underline;
+  }
 `
