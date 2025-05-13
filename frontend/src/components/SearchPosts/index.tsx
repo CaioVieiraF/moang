@@ -21,8 +21,8 @@ export function SearchPosts() {
 
   return (
     <SearchPostsContainer onSubmit={handleSubmit(handleSearch)}>
-      <input type="text" placeholder="Buscar um post..." {...register('query')} />
-      <button disabled={isSubmitting}><Search size={20} /> Buscar</button>
+      <input type="text" placeholder="Buscar um post..." {...register('query')} disabled />
+      <button disabled><Search size={20} /> Buscar</button>
     </SearchPostsContainer>
   )
 }

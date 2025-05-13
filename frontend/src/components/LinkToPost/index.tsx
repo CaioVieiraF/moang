@@ -1,4 +1,3 @@
-import { Link } from 'react-router-dom'
 import { LinkContainer } from './styles'
 import { useContext } from 'react'
 import { PostsContext } from '../../layouts/contexts/PostsContext'
@@ -16,11 +15,13 @@ export function LinkToPost({ title, content, postID }: LinkProps) {
     setPostBody(content)
   }
 
+  const date = new Intl.DateTimeFormat('pt-BR')
+  const formatedDate = date.format(new Date())
+
   return (
-    <LinkContainer onClick={handleSelectPost}>
-      <Link to="/posts">
-        <h3>#{postID} {title}</h3>
-      </Link>
+    <LinkContainer onClick={handleSelectPost} to={'/post/' + postID}>
+      <h3>{title}</h3>
+      <small>{formatedDate}</small>
     </LinkContainer>
   )
 }
