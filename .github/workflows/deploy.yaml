@@ -16,6 +16,9 @@ jobs:
         working-directory: ./frontend
 
     steps:
+    - name: Check Environment
+      run: echo $VITE_API_BASEURL
+    
     - name: Checkout
       uses: actions/checkout@v4
 
