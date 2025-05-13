@@ -11,7 +11,8 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     defaults:
-      working-directory: ./frontend
+      run:
+        working-directory: ./frontend
     steps:
     - name: Checkout
       uses: actions/checkout@v4
@@ -31,6 +32,6 @@ jobs:
         ARGS: "-rlgoDzvc --delete"
         SOURCE: "dist/"
         REMOTE_HOST: ${{ vars.REMOTE_HOST }}
-        REMOTE_USER: ${{ secret.REMOTE_USER }}
-        REMOTE_PORT: ${{ secret.REMOTE_PORT }}
+        REMOTE_USER: ${{ secrets.REMOTE_USER }}
+        REMOTE_PORT: ${{ secrets.REMOTE_PORT }}
         TARGET: ${{ vars.TARGET }}
