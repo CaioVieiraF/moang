@@ -6,8 +6,7 @@ export const HeaderContainer = styled.header`
   align-items: center;
   justify-content: space-between;
   padding: 2rem;
-  background: ${props => props.theme['primary-700']};
-  border-bottom: 1px solid ${props => props.theme['secondary-800']};
+  background: ${props => props.theme['primary-600']};
 
   nav {
     display: flex;
@@ -28,7 +27,7 @@ export const HeaderContainer = styled.header`
 
 export const Logo = styled(Link)`
   text-decoration: none;
-  color: ${props => props.theme['text']};
+  color: ${props => props.theme['accent-100']};
   font-weight: bold;
   font-size: 2rem;
 

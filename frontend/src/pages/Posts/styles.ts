@@ -3,9 +3,9 @@ import styled from 'styled-components'
 export const PostsContainer = styled.main`
   max-width: 76rem;
   height: 100%;
-  width: 100%;
+  width: 90%;
 
-  margin: 2rem auto;
+  margin: 2.5rem auto;
   border-radius: 3px;
 
   ul {

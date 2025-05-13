@@ -8,10 +8,9 @@ export const LinkContainer = styled(Link)`
   justify-content: space-between;
   text-decoration: none;
 
-  background: ${props => props.theme['secondary-900']};
   color: ${props => props.theme['text']};
   border-top: 2px solid transparent;
-  border-bottom: 2px solid transparent;
+  border-bottom: 2px solid ${props => props.theme['primary-600']};
   margin-bottom: 1rem;
   padding: 2rem;
 
@@ -23,8 +22,9 @@ export const LinkContainer = styled(Link)`
     cursor: pointer;
     font-weight: bold;
     background: ${props => props.theme['secondary-800']};
+    color: ${props => props.theme['accent-200']};
 
-    border-bottom: 2px solid ${props => props.theme['primary-600']};
+    border-bottom: 2px solid transparent;
   }
 
 `
