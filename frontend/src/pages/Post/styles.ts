@@ -23,9 +23,8 @@ export const PostTitle = styled.div`
 
   padding: 2.5rem;
   gap: 1rem;
-  border-radius: 3px;
-  background: ${props => props.theme['secondary-900']};
-  border: 1px solid ${props => props.theme['secondary-800']};
+  border-bottom: 2px solid ${props => props.theme['secondary-800']};
+  color: ${props => props.theme['accent-100']};
 
   small {
     color: ${props => props.theme['secondary-500']};

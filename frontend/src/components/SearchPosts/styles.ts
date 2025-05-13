@@ -12,7 +12,7 @@ export const SearchPostsContainer = styled.form`
     border: 1px solid ${props => props.theme['primary-700']};
     background: ${props => props.theme['primary-900']};
     color: ${props => props.theme['text-300']};
-    padding: 1rem;
+    padding: 0.5rem;
 
     &::placeholder {
       color: ${props => props.theme['text-700']};
@@ -29,7 +29,7 @@ export const SearchPostsContainer = styled.form`
     gap: 0.75rem;
 
     border: 0;
-    padding: 1rem;
+    padding: 0.5rem;
     background: transparent;
     border: 1px solid ${props => props.theme['primary-300']};
     color: ${props => props.theme['text-300']};

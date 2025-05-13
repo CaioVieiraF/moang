@@ -1,11 +1,12 @@
-import { HeaderContainer } from './styles'
+import { HeaderContainer, Logo } from './styles'
 import { NavLink } from 'react-router-dom'
 
 export function Header() {
   return (
     <HeaderContainer>
+      <Logo to="/">Moang</Logo>
       <nav>
-        <NavLink to="/" title="Home">Moang</NavLink>
+        <NavLink to="/about" title="about">Sobre</NavLink>
       </nav>
     </HeaderContainer>
   )
