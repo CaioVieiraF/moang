@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - main
+    paths:
+      - 'frontend/**'
+
   workflow_dispatch:
 
 jobs:
@@ -18,9 +21,6 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v4
-      
-    - name: Check Environment
-      run: echo ${{ vars.VITE_API_BASEURL }}
       
     - name: Install dependencies
       run: npm ci
