@@ -37,4 +37,4 @@ jobs:
         REMOTE_HOST: ${{ vars.REMOTE_HOST }}
         REMOTE_USER: ${{ secrets.REMOTE_USER }}
         REMOTE_PORT: ${{ secrets.REMOTE_PORT }}
-        TARGET: ${{ vars.TARGET }}
+        TARGET: ${{ vars.DEV_TARGET }}
