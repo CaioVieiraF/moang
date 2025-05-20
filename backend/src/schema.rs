@@ -9,6 +9,7 @@ diesel::table! {
         slug -> Varchar,
         #[max_length = 36]
         author -> Varchar,
+        created_at -> Timestamp,
     }
 }
 
