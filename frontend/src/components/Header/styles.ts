@@ -6,7 +6,9 @@ export const HeaderContainer = styled.header`
   align-items: center;
   justify-content: space-between;
   padding: 2rem;
-  background: ${props => props.theme['primary-600']};
+  background: ${props => props.theme.background};
+  background: radial-gradient(at 50% 100%, ${props => props.theme['secondary-900']}, ${props => props.theme.background});
+  border-bottom: 1px solid ${props => props.theme.secondary};
 
   nav {
     display: flex;

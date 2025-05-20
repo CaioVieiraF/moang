@@ -9,8 +9,8 @@ export const SearchPostsContainer = styled.form`
     flex: 1;
     border-radius: 3px;
     border: 0;
-    border: 1px solid ${props => props.theme['primary-700']};
-    background: ${props => props.theme['primary-900']};
+    border: 1px solid ${props => props.theme['secondary-700']};
+    background: ${props => props.theme['secondary-900']};
     color: ${props => props.theme['text-300']};
     padding: 0.5rem;
 
@@ -30,9 +30,8 @@ export const SearchPostsContainer = styled.form`
 
     border: 0;
     padding: 0.5rem;
-    background: transparent;
-    border: 1px solid ${props => props.theme['primary-300']};
-    color: ${props => props.theme['text-300']};
+    background: ${props => props.theme['secondary-800']};
+    color: ${props => props.theme['text']};
     font-weight: bold;
     border-radius: 3px;
     cursor: pointer;
@@ -44,8 +43,10 @@ export const SearchPostsContainer = styled.form`
     }
 
     &:not(:disabled):hover {
-      background: ${props => props.theme['primary-300']};
+      background: ${props => props.theme['secondary-500']};
       color: ${props => props.theme['text-100']};
+      box-shadow: 0 0 8px 2px ${props => props.theme['accent-800']};
+      transition: 0.1s;
     }
   }
 `
