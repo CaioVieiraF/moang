@@ -1,5 +1,5 @@
 use actix_session::Session;
-use actix_web::{post, web::Json, HttpRequest, HttpResponse};
+use actix_web::{post, web::Json, HttpResponse};
 use diesel::{RunQueryDsl, SelectableHelper};
 use serde::Deserialize;
 use uuid::Uuid;

@@ -6,7 +6,6 @@ use core::panic;
 use std::env;
 
 use actix_session::Session;
-use actix_web::http::header::{HeaderMap, HeaderValue};
 use diesel::prelude::*;
 use dotenv::dotenv;
 use jsonwebtoken::{DecodingKey, Validation};

@@ -6,6 +6,7 @@ import { api } from '../../lib/axios'
 interface PostData {
   title: string,
   body: string,
+  created_at: Date
 }
 
 export function Post() {
@@ -13,6 +14,7 @@ export function Post() {
   const [post, setPost] = useState<PostData>({
     title: '',
     body: '',
+    created_at: new Date(),
   })
   const date = new Intl.DateTimeFormat('pt-BR', {
     year: 'numeric',
@@ -23,7 +25,7 @@ export function Post() {
     second: 'numeric',
     hour12: false,
   })
-  const formatedDate = date.format(new Date())
+  const formatedDate = date.format(new Date(post.created_at))
 
   const getPost = useCallback(async () => {
     const response = await api.get('/posts/' + id)
