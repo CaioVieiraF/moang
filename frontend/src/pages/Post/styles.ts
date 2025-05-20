@@ -26,6 +26,8 @@ export const PostTitle = styled.div`
   border-bottom: 2px solid ${props => props.theme['secondary-800']};
   color: ${props => props.theme['accent-100']};
 
+  background: radial-gradient(farthest-corner at 50% 120%, ${props => props.theme['secondary-900']} 0%, rgba(0, 0, 0, 0) 70% 100%);
+
   small {
     color: ${props => props.theme['secondary-500']};
   }
