@@ -1,4 +1,7 @@
-use crate::{establish_connection, models::Post};
+use crate::{
+    establish_connection,
+    models::{GetPost, Post},
+};
 use actix_web::{get, web::Json, HttpResponse};
 use diesel::prelude::*;
 
@@ -13,7 +16,12 @@ pub async fn get_posts() -> HttpResponse {
         .load(connection);
 
     match query_result {
-        Ok(retreived_posts) => HttpResponse::Ok().json(Json(retreived_posts)),
+        Ok(retreived_posts) => HttpResponse::Ok().json(Json(
+            retreived_posts
+                .iter()
+                .map(GetPost::from)
+                .collect::<Vec<GetPost>>(),
+        )),
         Err(e) => HttpResponse::InternalServerError().body(format!("Server error: {e}")),
     }
 }

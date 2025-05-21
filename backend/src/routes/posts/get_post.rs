@@ -1,4 +1,7 @@
-use crate::{establish_connection, models::Post};
+use crate::{
+    establish_connection,
+    models::{GetPost, Post},
+};
 use actix_web::{get, web::Json, web::Path, HttpResponse};
 use diesel::prelude::*;
 
@@ -15,7 +18,7 @@ pub async fn get_post(path: Path<i32>) -> HttpResponse {
         .optional();
 
     match query_result {
-        Ok(Some(retrieved_post)) => HttpResponse::Ok().json(Json(retrieved_post)),
+        Ok(Some(retrieved_post)) => HttpResponse::Ok().json(Json(GetPost::from(&retrieved_post))),
         Ok(None) => HttpResponse::NotFound().finish(),
         Err(_) => HttpResponse::InternalServerError().finish(),
     }

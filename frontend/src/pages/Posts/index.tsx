@@ -8,6 +8,7 @@ interface Post {
   id: number,
   title: string,
   body: string,
+  created_at: string
 }
 
 export function Posts() {
@@ -30,7 +31,7 @@ export function Posts() {
       </Title>
       <SearchPosts />
       <ul>
-        {posts.map(post => <LinkToPost key={post.id} postID={post.id} title={post.title} content={post.body} />)}
+        {posts.map(post => <LinkToPost key={post.id} postID={post.id} title={post.title} createdAt={post.created_at} />)}
       </ul>
     </PostsContainer>
   )

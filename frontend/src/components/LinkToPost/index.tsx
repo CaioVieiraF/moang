@@ -1,25 +1,17 @@
 import { LinkContainer } from './styles'
-import { useContext } from 'react'
-import { PostsContext } from '../../layouts/contexts/PostsContext'
 
 interface LinkProps {
   title: string,
-  content: string,
   postID: number
+  createdAt: string
 }
 
-export function LinkToPost({ title, content, postID }: LinkProps) {
-  const { setPostTitle, setPostBody } = useContext(PostsContext)
-  function handleSelectPost() {
-    setPostTitle(title)
-    setPostBody(content)
-  }
-
+export function LinkToPost({ title, postID, createdAt }: LinkProps) {
   const date = new Intl.DateTimeFormat('pt-BR')
-  const formatedDate = date.format(new Date())
+  const formatedDate = date.format(new Date(createdAt))
 
   return (
-    <LinkContainer onClick={handleSelectPost} to={'/post/' + postID}>
+    <LinkContainer to={'/post/' + postID}>
       <h3>{title}</h3>
       <small>{formatedDate}</small>
     </LinkContainer>

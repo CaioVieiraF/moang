@@ -4,7 +4,7 @@ use crate::{
     user_is_loged_in,
 };
 use actix_session::Session;
-use actix_web::{post, web::Json, HttpRequest, HttpResponse};
+use actix_web::{post, web::Json, HttpResponse};
 use diesel::prelude::*;
 use jsonwebtoken::{DecodingKey, Validation};
 use serde::Deserialize;
