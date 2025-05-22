@@ -16,7 +16,7 @@ export function Posts() {
 
   async function getPosts() {
     const response = await api.get('posts')
-    setPosts(response.data)
+    setPosts(response.data.reverse())
   }
 
   useEffect(() => {

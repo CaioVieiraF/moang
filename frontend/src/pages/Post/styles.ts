@@ -12,6 +12,7 @@ export const PostContainer = styled.div`
     font-size: 18px;
     line-height: 2;
     padding: 1rem;
+    white-space: pre-line;
   }
 `
 

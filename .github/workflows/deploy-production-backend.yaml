@@ -1,4 +1,4 @@
-name: Deploy backend on dev environment
+name: Deploy backend
 
 on:
   push:

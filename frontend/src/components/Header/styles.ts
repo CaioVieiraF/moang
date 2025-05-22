@@ -7,12 +7,12 @@ export const HeaderContainer = styled.header`
   justify-content: space-between;
   padding: 2rem;
   background: ${props => props.theme.background};
-  background: radial-gradient(at 50% 100%, ${props => props.theme['secondary-900']}, ${props => props.theme.background});
+  background: radial-gradient(at 50% 100%, ${props => props.theme['primary-900']}, ${props => props.theme.background});
   border-bottom: 1px solid ${props => props.theme.secondary};
 
   nav {
     display: flex;
-    gap: 0.5rem;
+    gap: 1rem;
 
     a {
       text-decoration: none;

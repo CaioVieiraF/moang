@@ -9,7 +9,7 @@ migrations/
 
 # Gemini
 .certificates/
-content/*-post.gmi
+content/*
 
 # Openssl
 *.pem
