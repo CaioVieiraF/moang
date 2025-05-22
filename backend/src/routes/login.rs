@@ -2,7 +2,7 @@ use std::env;
 
 use crate::{establish_connection, models::Claims};
 use actix_session::Session;
-use actix_web::{get, web::Json, HttpResponse};
+use actix_web::{post, web::Json, HttpResponse};
 use diesel::{ExpressionMethods, OptionalExtension, QueryDsl, RunQueryDsl};
 use dotenv::dotenv;
 use jsonwebtoken::{EncodingKey, Header};
@@ -39,7 +39,7 @@ fn is_password_valid(hashed_password: String, password_to_verify: String) -> Opt
     }
 }
 
-#[get("/login")]
+#[post("/login")]
 async fn login(session: Session, request_data: Json<LoginData>) -> HttpResponse {
     use crate::schema::users::dsl::*;
 
