@@ -4,7 +4,7 @@ export const LayoutContainer = styled.div`
   background: transparent;
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  min-height: 100svh;
 
   justify-content: space-between;
 `

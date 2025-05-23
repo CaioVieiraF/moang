@@ -1,11 +1,12 @@
 import { Link } from 'react-router-dom'
 import styled from 'styled-components'
 
-export const PostContainer = styled.div`
+export const PostContainer = styled.main`
   max-width: 76rem;
   height: 100%;
   width: 100%;
   margin: 2rem auto;
+  flex-grow: 1;
 
   article {
     margin: 2rem;
