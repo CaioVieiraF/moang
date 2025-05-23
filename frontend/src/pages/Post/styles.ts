@@ -16,7 +16,7 @@ export const PostContainer = styled.div`
   }
 `
 
-export const PostTitle = styled.div`
+export const PostTitle = styled.header`
   display: flex;
   flex-direction: column;
   align-items: left;
