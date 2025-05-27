@@ -7,7 +7,7 @@ use actix_web::{
 };
 
 pub fn router() -> Scope {
-    web::scope("api")
+    web::scope("")
         .service(posts::posts_router())
         .service(users::users_router())
         .service(login::login)
