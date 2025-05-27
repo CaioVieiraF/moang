@@ -33,8 +33,9 @@ export function Post() {
   }, [id])
 
   useEffect(() => {
+    document.title = `Moang blog - ${post.title}`
     getPost()
-  }, [getPost])
+  }, [getPost, post])
 
   return (
     <PostContainer>
