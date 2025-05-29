@@ -47,11 +47,11 @@ impl Actor {
 
         let context = Url::try_from("https://www.w3.org/ns/activitystreams".to_string()).unwrap();
         let id = Url::try_from(format!("{base_url}/users/{name}")).unwrap();
-        let inbox = Url::try_from(format!("{base_url}/users/{name}/inbox")).unwrap();
-        let outbox = Url::try_from(format!("{base_url}/users/{name}/outbox")).unwrap();
-        let liked = Url::try_from(format!("{base_url}/users/{name}/liked")).unwrap();
-        let following = Url::try_from(format!("{base_url}/users/{name}/following")).unwrap();
-        let followers = Url::try_from(format!("{base_url}/users/{name}/followers")).unwrap();
+        let inbox = Url::try_from(format!("{base_url}/inbox")).unwrap();
+        let outbox = Url::try_from(format!("{base_url}/outbox")).unwrap();
+        let liked = Url::try_from(format!("{base_url}/liked")).unwrap();
+        let following = Url::try_from(format!("{base_url}/following")).unwrap();
+        let followers = Url::try_from(format!("{base_url}/followers")).unwrap();
 
         let url = Url::try_from("https://moang.com.br".to_string()).unwrap();
 
@@ -68,6 +68,13 @@ impl Actor {
             followers,
             url,
             summary,
+        }
+    }
+
+    pub fn set_to_public(self) -> Self {
+        Actor {
+            id: Url::try_from("https://www.w3.org/ns/activitystreams#Public".to_string()).unwrap(),
+            ..self
         }
     }
 }

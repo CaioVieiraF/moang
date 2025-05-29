@@ -26,6 +26,7 @@ pub enum ObjType {
     Note,
     Person,
     Create,
+    OrderedCollection,
 }
 
 pub fn activity_pub_routes() -> Scope {
