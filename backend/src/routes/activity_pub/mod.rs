@@ -1,16 +1,13 @@
 use std::str::FromStr;
 
-use actix_web::{
-    http::{uri::InvalidUri, Uri},
-    web, Scope,
-};
+use actix_web::http::{uri::InvalidUri, Uri};
 use serde::{Deserialize, Serialize};
 
 pub mod actor;
 pub mod collection;
-pub mod post;
+pub mod content_object;
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone)]
 pub struct Url(String);
 
 impl TryFrom<String> for Url {
@@ -27,8 +24,5 @@ pub enum ObjType {
     Person,
     Create,
     OrderedCollection,
-}
-
-pub fn activity_pub_routes() -> Scope {
-    web::scope("fed").service(actor::get_actor)
+    OrderedCollectionPage,
 }

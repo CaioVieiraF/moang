@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use super::{ObjType, Url};
+use crate::routes::activity_pub::{ObjType, Url};
 
 #[derive(Deserialize, Serialize)]
 pub struct OrderedCollection {
@@ -14,7 +14,7 @@ pub struct OrderedCollection {
     obj_type: ObjType,
 
     #[serde(rename = "totalItems")]
-    total_items: i32,
+    total_items: i64,
 }
 
 pub struct NoId;
@@ -54,7 +54,7 @@ impl<I, F, T> OrderedCollectionBuilder<I, F, T> {
         }
     }
 
-    pub fn total_items(self, value: i32) -> OrderedCollectionBuilder<I, F, i32> {
+    pub fn total_items(self, value: i64) -> OrderedCollectionBuilder<I, F, i64> {
         OrderedCollectionBuilder {
             id: self.id,
             first: self.first,
@@ -63,7 +63,7 @@ impl<I, F, T> OrderedCollectionBuilder<I, F, T> {
     }
 }
 
-impl OrderedCollectionBuilder<Url, Url, i32> {
+impl OrderedCollectionBuilder<Url, Url, i64> {
     pub fn build(self) -> OrderedCollection {
         let context = Url::try_from("https://www.w3.org/ns/activitystreams".to_string()).unwrap();
 

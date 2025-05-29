@@ -9,8 +9,7 @@ use actix_web::{
 
 pub fn router() -> Scope {
     web::scope("")
-        .service(posts::outbox_router())
-        .service(users::users_router())
         .service(login::login)
-        .service(activity_pub::activity_pub_routes())
+        .service(users::users_router())
+        .service(posts::posts_router())
 }

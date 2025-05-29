@@ -1,11 +1,8 @@
-use crate::{
-    establish_connection,
-    models::{GetPost, Post},
-};
+use crate::{establish_connection, models::Post, routes::activity_pub::collection::OrderedItem};
 use actix_web::{get, web::Json, web::Path, HttpResponse};
 use diesel::prelude::*;
 
-#[get("/{post_id}")]
+#[get("/posts/{post_id}")]
 pub async fn get_post(path: Path<i32>) -> HttpResponse {
     use crate::schema::posts::dsl::*;
 
@@ -18,7 +15,11 @@ pub async fn get_post(path: Path<i32>) -> HttpResponse {
         .optional();
 
     match query_result {
-        Ok(Some(retrieved_post)) => HttpResponse::Ok().json(Json(GetPost::from(&retrieved_post))),
+        Ok(Some(retrieved_post)) => HttpResponse::Ok()
+            .content_type(
+                "application/activity+json; profile=\"https://www.w3.org/ns/activitystreams\"",
+            )
+            .json(Json(OrderedItem::from(&retrieved_post))),
         Ok(None) => HttpResponse::NotFound().finish(),
         Err(_) => HttpResponse::InternalServerError().finish(),
     }

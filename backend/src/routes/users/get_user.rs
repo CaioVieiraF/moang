@@ -15,7 +15,9 @@ pub async fn get_user(path: Path<String>) -> HttpResponse {
         .optional();
 
     match query_result {
-        Ok(Some(retrieved_user)) => HttpResponse::Ok().json(Json(Actor::from(&retrieved_user))),
+        Ok(Some(retrieved_user)) => HttpResponse::Ok()
+            .content_type("application/activity+json")
+            .json(Json(Actor::from(&retrieved_user))),
         Ok(None) => HttpResponse::NotFound().finish(),
         Err(_) => HttpResponse::InternalServerError().finish(),
     }

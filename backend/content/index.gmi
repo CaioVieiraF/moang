@@ -20,3 +20,6 @@ sobre tecnologia.
 
 ## Postagens
 
+
+=> /inbox-test.gmi Inbox test
+=> /outbox-test.gmi Outbox test
