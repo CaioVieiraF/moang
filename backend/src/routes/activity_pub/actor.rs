@@ -70,13 +70,6 @@ impl Actor {
             summary,
         }
     }
-
-    pub fn set_to_public(self) -> Self {
-        Actor {
-            id: Url::try_from("https://www.w3.org/ns/activitystreams#Public".to_string()).unwrap(),
-            ..self
-        }
-    }
 }
 
 impl From<&User> for Actor {

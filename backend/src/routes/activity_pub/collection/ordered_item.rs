@@ -17,6 +17,7 @@ pub struct OrderedItem {
     to: Vec<Url>,
     cc: Vec<Url>,
     object: ContentObject,
+    name: String,
 
     #[serde(rename = "@context")]
     context: Url,
@@ -28,25 +29,28 @@ pub struct OrderedItem {
 pub struct NoId;
 pub struct NoPublished;
 pub struct NoObject;
+pub struct NoName;
 
-pub struct OrderedItemBuilder<I, P, O> {
+pub struct OrderedItemBuilder<I, P, O, N> {
     id: I,
     published: P,
     object: O,
+    name: N,
 }
 
-impl OrderedItemBuilder<NoId, NoPublished, NoObject> {
+impl OrderedItemBuilder<NoId, NoPublished, NoObject, NoName> {
     pub fn new() -> Self {
         OrderedItemBuilder {
             id: NoId,
             published: NoPublished,
             object: NoObject,
+            name: NoName,
         }
     }
 }
 
-impl<I, P, O> OrderedItemBuilder<I, P, O> {
-    pub fn id(self, value: i32) -> OrderedItemBuilder<Url, P, O> {
+impl<I, P, O, N> OrderedItemBuilder<I, P, O, N> {
+    pub fn id(self, value: i32) -> OrderedItemBuilder<Url, P, O, N> {
         dotenv().ok();
         let base_url = env::var("BASE_URL").expect("BASE_URL must be set!");
 
@@ -54,27 +58,39 @@ impl<I, P, O> OrderedItemBuilder<I, P, O> {
             id: Url::try_from(format!("{base_url}/posts/{value}")).unwrap(),
             published: self.published,
             object: self.object,
+            name: self.name,
         }
     }
 
-    pub fn object(self, value: ContentObject) -> OrderedItemBuilder<I, P, ContentObject> {
+    pub fn object(self, value: ContentObject) -> OrderedItemBuilder<I, P, ContentObject, N> {
         OrderedItemBuilder {
             id: self.id,
             published: self.published,
             object: value,
+            name: self.name,
         }
     }
 
-    pub fn published(self, value: String) -> OrderedItemBuilder<I, String, O> {
+    pub fn name(self, value: String) -> OrderedItemBuilder<I, P, O, String> {
+        OrderedItemBuilder {
+            id: self.id,
+            published: self.published,
+            object: self.object,
+            name: value,
+        }
+    }
+
+    pub fn published(self, value: String) -> OrderedItemBuilder<I, String, O, N> {
         OrderedItemBuilder {
             id: self.id,
             published: value,
             object: self.object,
+            name: self.name,
         }
     }
 }
 
-impl OrderedItemBuilder<Url, String, ContentObject> {
+impl OrderedItemBuilder<Url, String, ContentObject, String> {
     pub fn build(self) -> OrderedItem {
         dotenv().ok();
         let base_url = env::var("BASE_URL").expect("BASE_URL must be set!");
@@ -93,6 +109,7 @@ impl OrderedItemBuilder<Url, String, ContentObject> {
             published: self.published,
             to,
             cc,
+            name: self.name,
             context,
             obj_type: ObjType::Create,
             object: self.object,
@@ -107,8 +124,8 @@ impl From<&Post> for OrderedItem {
             .id(value.id)
             .published(format!("{}", date.format("%+")))
             .object(ContentObject::from(value))
+            .name(value.title.clone())
             .build();
-
         post
     }
 }

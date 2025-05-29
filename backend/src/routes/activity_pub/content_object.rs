@@ -17,6 +17,7 @@ pub struct ContentObject {
     attributed_to: Url,
     to: Vec<Url>,
     content: String,
+    name: String,
 
     #[serde(rename = "inReplyTo")]
     in_reply_to: Option<String>,
@@ -49,6 +50,7 @@ impl From<&Post> for ContentObject {
             url,
             attributed_to,
             to,
+            name: value.title.clone(),
             content: value.body.clone(),
             in_reply_to: None,
             context,
