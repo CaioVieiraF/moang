@@ -55,7 +55,7 @@ impl<I, P, O, N> OrderedItemBuilder<I, P, O, N> {
         let base_url = env::var("BASE_URL").expect("BASE_URL must be set!");
 
         OrderedItemBuilder {
-            id: Url::try_from(format!("{base_url}/posts/{value}")).unwrap(),
+            id: Url::try_from(format!("{base_url}/outbox/posts/{value}")).unwrap(),
             published: self.published,
             object: self.object,
             name: self.name,

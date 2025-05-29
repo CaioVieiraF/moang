@@ -18,6 +18,8 @@ pub struct Actor<U = Url> {
     liked: U,
     url: U,
     summary: String,
+    discoverable: bool,
+    indexable: bool,
     name: String,
 
     #[serde(rename = "@context")]
@@ -58,6 +60,8 @@ impl Actor {
         Actor {
             prefered_username: name.clone(),
             obj_type: ObjType::Person,
+            discoverable: true,
+            indexable: true,
             context,
             id,
             inbox,

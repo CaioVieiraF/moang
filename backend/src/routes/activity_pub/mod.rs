@@ -24,6 +24,7 @@ pub enum ObjType {
     Person,
     Create,
     Article,
+    Collection,
     OrderedCollection,
     OrderedCollectionPage,
 }
