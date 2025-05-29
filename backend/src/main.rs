@@ -1,13 +1,15 @@
 use actix_cors::Cors;
 use actix_session::{storage::CookieSessionStore, SessionMiddleware};
-use actix_web::{cookie::Key, http, App, HttpServer};
+use actix_web::{cookie::Key, http, middleware::Logger, App, HttpServer};
 use blog::routes::router;
 use dotenv::dotenv;
+use env_logger::Env;
 use std::env;
 
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
     dotenv().ok();
+    env_logger::init_from_env(Env::default().default_filter_or("info"));
 
     let cookie_key = Key::from(
         env::var("ACTIX_COOKIE_KEY")
@@ -40,6 +42,7 @@ async fn main() -> std::io::Result<()> {
                 cookie_key.clone(),
             ))
             .wrap(cors)
+            .wrap(Logger::default())
             .service(router())
     })
     .bind((blog_address.as_str(), blog_port))?
