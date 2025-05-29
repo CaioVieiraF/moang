@@ -5,7 +5,7 @@ use crate::{
 use actix_web::{get, web::Json, HttpResponse};
 use diesel::prelude::*;
 
-#[get("")]
+#[get("posts")]
 pub async fn get_posts() -> HttpResponse {
     use crate::schema::posts::dsl::*;
 
