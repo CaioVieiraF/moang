@@ -4,19 +4,30 @@ import { LinkToPost } from '../../components/LinkToPost'
 import { api } from '../../lib/axios'
 import { SearchPosts } from '../../components/SearchPosts'
 
-interface Post {
-  id: number,
-  title: string,
-  body: string,
-  created_at: string
+export interface PostObject {
+  id: string,
+  name: string,
+  object: {
+    content: string
+  },
+  published: Date
+}
+
+interface OrderedCollectionPage {
+  totalItems: number,
+  orderedItems: PostObject[]
 }
 
 export function Posts() {
-  const [posts, setPosts] = useState<Post[]>([])
+  const [posts, setPosts] = useState<OrderedCollectionPage>({
+    totalItems: 0,
+    orderedItems: [],
+  })
 
   async function getPosts() {
-    const response = await api.get('posts')
-    setPosts(response.data.reverse())
+    const response = await api.get('outbox/posts')
+
+    setPosts(response.data)
   }
 
   useEffect(() => {
@@ -27,11 +38,16 @@ export function Posts() {
     <PostsContainer>
       <Title>
         <h2>Publicações</h2>
-        <small>{posts.length} publicações</small>
+        <small>{posts.totalItems} publicações</small>
       </Title>
       <SearchPosts />
       <ul>
-        {posts.map(post => <LinkToPost key={post.id} postID={post.id} title={post.title} createdAt={post.created_at} />)}
+        {posts.orderedItems.map(post => {
+          const path = new URL(post.id).pathname.split('/')
+          const postId = parseInt(path[path.length - 1])
+
+          return <LinkToPost key={post.id} postID={postId} title={post.name} createdAt={post.published} />
+        })}
       </ul>
     </PostsContainer>
   )

@@ -3,7 +3,7 @@ import { LinkContainer } from './styles'
 interface LinkProps {
   title: string,
   postID: number
-  createdAt: string
+  createdAt: Date
 }
 
 export function LinkToPost({ title, postID, createdAt }: LinkProps) {
