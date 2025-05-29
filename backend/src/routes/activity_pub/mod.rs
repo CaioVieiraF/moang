@@ -23,6 +23,7 @@ pub enum ObjType {
     Note,
     Person,
     Create,
+    Article,
     OrderedCollection,
     OrderedCollectionPage,
 }

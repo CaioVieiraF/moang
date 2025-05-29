@@ -14,7 +14,6 @@ pub struct ContentObject {
     summary: Option<String>,
     published: String,
     url: Url,
-    attributed_to: Url,
     to: Vec<Url>,
     content: String,
     name: String,
@@ -27,6 +26,9 @@ pub struct ContentObject {
 
     #[serde(rename = "type")]
     obj_type: ObjType,
+
+    #[serde(rename = "attributedTo")]
+    attributed_to: Url,
 }
 
 impl From<&Post> for ContentObject {
@@ -54,7 +56,7 @@ impl From<&Post> for ContentObject {
             content: value.body.clone(),
             in_reply_to: None,
             context,
-            obj_type: ObjType::Note,
+            obj_type: ObjType::Article,
         }
     }
 }
