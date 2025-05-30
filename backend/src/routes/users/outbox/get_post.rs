@@ -2,10 +2,7 @@ use crate::{
     establish_connection,
     models::Post,
     routes::{
-        activity_pub::{
-            collection::{OrderedItem, OrderedItemBuilder},
-            content_object::ContentObject,
-        },
+        activity_pub::{collection::OrderedItemBuilder, content_object::ContentObject},
         users::has_user,
     },
 };
@@ -17,7 +14,7 @@ use actix_web::{
 use chrono::{DateTime, Utc};
 use diesel::prelude::*;
 
-#[get("/{post_id}")]
+#[get("/posts/{post_id}")]
 pub async fn get_post(path: Path<(String, i32)>, req: HttpRequest) -> HttpResponse {
     use crate::schema::posts::dsl::*;
 

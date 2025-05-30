@@ -1,20 +1,12 @@
 use crate::{
     establish_connection,
-    models::Post,
-    routes::{
-        activity_pub::{
-            collection::{OrderedCollectionBuilder, OrderedItem, OrderedItemBuilder},
-            content_object::ContentObject,
-        },
-        users::has_user,
-    },
+    routes::{activity_pub::collection::OrderedCollectionBuilder, users::has_user},
 };
 use actix_web::{
     get,
     web::{Json, Path},
     HttpRequest, HttpResponse,
 };
-use chrono::{DateTime, Utc};
 use diesel::prelude::*;
 use dotenv::dotenv;
 
@@ -28,32 +20,14 @@ pub async fn get_outbox(path: Path<String>, req: HttpRequest) -> HttpResponse {
     }
 
     let connection = &mut establish_connection();
-    let query_result = posts
-        .filter(is_public.eq(true))
-        .select(Post::as_select())
-        .load(connection);
+    let query_result = posts.count().get_result(connection);
 
     match query_result {
-        Ok(retreived_posts) => {
-            let ordered_items = retreived_posts
-                .iter()
-                .map(|post| {
-                    let date: DateTime<Utc> = post.created_at.into();
-                    let post_id = format!("{}/{}", req.full_url(), post.id);
-                    let post = OrderedItemBuilder::new()
-                        .id(post_id)
-                        .published(format!("{}", date.format("%+")))
-                        .object(ContentObject::from(post))
-                        .name(post.title.clone())
-                        .build();
-                    post
-                })
-                .collect::<Vec<OrderedItem>>();
-
+        Ok(total_items) => {
             let all_posts = OrderedCollectionBuilder::new()
                 .id(req.full_url())
-                .total_items(ordered_items.len() as i64)
-                .ordered_items(ordered_items)
+                .total_items(total_items)
+                .first("posts")
                 .build();
 
             HttpResponse::Ok()

@@ -41,7 +41,7 @@ impl From<&Post> for ContentObject {
         let actor = format!("{base_url}/users/caio");
         let attributed_to = Url::try_from(actor.clone()).unwrap();
         let date: DateTime<Utc> = value.created_at.into();
-        let url = Url::try_from(format!("{actor}/outbox/{}", value.id)).unwrap();
+        let url = Url::try_from(format!("{actor}/outbox/posts/{}", value.id)).unwrap();
         let likes =
             Collection::new(Url::try_from(format!("{actor}/outbox/{}/likes", value.id)).unwrap());
         let shares =

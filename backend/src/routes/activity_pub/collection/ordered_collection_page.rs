@@ -1,21 +1,13 @@
-use std::env;
-
-use dotenv::dotenv;
 use serde::{Deserialize, Serialize};
 
-use crate::routes::activity_pub::{ObjType, Url};
+use crate::routes::activity_pub::{ActivityPub, ObjType, Url};
 
 use super::OrderedItem;
 
 #[derive(Deserialize, Serialize)]
 pub struct OrderedCollectionPage {
-    id: Url,
-
-    #[serde(rename = "@context")]
-    context: Url,
-
-    #[serde(rename = "type")]
-    obj_type: ObjType,
+    #[serde(flatten)]
+    activity_pub: ActivityPub,
 
     #[serde(rename = "totalItems")]
     total_items: i64,
@@ -47,16 +39,21 @@ impl OrderedCollectionPageBuilder<NoId, NoTotalItems, NoOrderedItems> {
     }
 }
 
-impl<I, T, O> OrderedCollectionPageBuilder<I, T, O> {
-    pub fn id(self, value: String) -> OrderedCollectionPageBuilder<Url, T, O> {
+impl<I> OrderedCollectionPageBuilder<I, NoTotalItems, NoOrderedItems> {
+    pub fn id(
+        self,
+        value: impl Into<String>,
+    ) -> OrderedCollectionPageBuilder<Url, NoTotalItems, NoOrderedItems> {
         OrderedCollectionPageBuilder {
-            id: Url::try_from(value).unwrap(),
+            id: Url::try_from(value.into()).unwrap(),
             total_items: self.total_items,
             ordered_items: self.ordered_items,
         }
     }
+}
 
-    pub fn total_items(self, value: i64) -> OrderedCollectionPageBuilder<I, i64, O> {
+impl<T, O> OrderedCollectionPageBuilder<Url, T, O> {
+    pub fn total_items(self, value: i64) -> OrderedCollectionPageBuilder<Url, i64, O> {
         OrderedCollectionPageBuilder {
             id: self.id,
             total_items: value,
@@ -67,7 +64,7 @@ impl<I, T, O> OrderedCollectionPageBuilder<I, T, O> {
     pub fn ordered_items(
         self,
         value: Vec<OrderedItem>,
-    ) -> OrderedCollectionPageBuilder<I, T, Vec<OrderedItem>> {
+    ) -> OrderedCollectionPageBuilder<Url, T, Vec<OrderedItem>> {
         OrderedCollectionPageBuilder {
             id: self.id,
             total_items: self.total_items,
@@ -78,17 +75,11 @@ impl<I, T, O> OrderedCollectionPageBuilder<I, T, O> {
 
 impl OrderedCollectionPageBuilder<Url, i64, Vec<OrderedItem>> {
     pub fn build(self) -> OrderedCollectionPage {
-        dotenv().ok();
-        let base_url = env::var("BASE_URL").expect("BASE_URL must be set!");
-
-        let context = Url::try_from("https://www.w3.org/ns/activitystreams".to_string()).unwrap();
-        let part_of = Url::try_from(format!("{base_url}/outbox/posts")).unwrap();
+        let activity_pub = ActivityPub::new(self.id.clone(), ObjType::OrderedCollectionPage);
 
         OrderedCollectionPage {
-            context,
-            part_of,
-            id: self.id,
-            obj_type: ObjType::OrderedCollectionPage,
+            activity_pub,
+            part_of: self.id,
             total_items: self.total_items,
             ordered_items: self.ordered_items,
         }
