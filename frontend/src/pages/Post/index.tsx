@@ -26,7 +26,7 @@ export function Post() {
   const formatedDate = date.format(new Date(post.published))
 
   const getPost = useCallback(async () => {
-    const response = await api.get('outbox/posts/' + id)
+    const response = await api.get('users/caio/outbox/' + id)
     setPost(response.data)
   }, [id])
 

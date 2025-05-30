@@ -25,7 +25,7 @@ export function Posts() {
   })
 
   async function getPosts() {
-    const response = await api.get('outbox/posts')
+    const response = await api.get('users/caio/outbox')
 
     setPosts(response.data)
   }
@@ -47,7 +47,7 @@ export function Posts() {
           const postId = parseInt(path[path.length - 1])
 
           return <LinkToPost key={post.id} postID={postId} title={post.name} createdAt={post.published} />
-        })}
+        }).reverse()}
       </ul>
     </PostsContainer>
   )
