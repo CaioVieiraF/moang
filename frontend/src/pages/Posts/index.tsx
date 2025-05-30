@@ -25,7 +25,7 @@ export function Posts() {
   })
 
   async function getPosts() {
-    const response = await api.get('users/caio/outbox')
+    const response = await api.get('users/caio/outbox/posts')
 
     setPosts(response.data)
   }
