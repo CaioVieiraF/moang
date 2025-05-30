@@ -46,7 +46,7 @@ impl Icon {
         Icon {
             obj_type: ObjType::Image,
             url: Url::try_from(url.into()).unwrap(),
-            media_type: "image/jpeg".into(),
+            media_type: "image/png".into(),
         }
     }
 }
