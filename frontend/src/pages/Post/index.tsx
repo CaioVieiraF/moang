@@ -2,19 +2,17 @@ import { useCallback, useEffect, useState } from 'react'
 import { PostContainer, PostTitle, PostTitleBackLink } from './styles'
 import { useParams } from 'react-router-dom'
 import { api } from '../../lib/axios'
-
-interface PostData {
-  title: string,
-  body: string,
-  created_at: Date
-}
+import { PostObject } from '../Posts'
 
 export function Post() {
   const { id } = useParams()
-  const [post, setPost] = useState<PostData>({
-    title: '',
-    body: '',
-    created_at: new Date(),
+  const [post, setPost] = useState<PostObject>({
+    id: '',
+    name: '',
+    object: {
+      content: '',
+    },
+    published: new Date(),
   })
   const date = new Intl.DateTimeFormat('pt-BR', {
     year: 'numeric',
@@ -25,26 +23,26 @@ export function Post() {
     second: 'numeric',
     hour12: false,
   })
-  const formatedDate = date.format(new Date(post.created_at))
+  const formatedDate = date.format(new Date(post.published))
 
   const getPost = useCallback(async () => {
-    const response = await api.get('/posts/' + id)
+    const response = await api.get('users/caio/outbox/posts/' + id)
     setPost(response.data)
   }, [id])
 
   useEffect(() => {
-    document.title = `Moang blog - ${post.title}`
+    document.title = `Moang blog - ${post.id}`
     getPost()
-  }, [getPost, post.title])
+  }, [getPost, post.id])
 
   return (
     <PostContainer>
       <PostTitle>
         <PostTitleBackLink to="/posts">{'< Voltar'}</PostTitleBackLink>
-        <h1>{post.title}</h1>
+        <h1>{post.name}</h1>
         <small>postado em {formatedDate}</small>
       </PostTitle>
-      <article>{post.body}</article>
+      <article>{post.object.content}</article>
     </PostContainer>
   )
 }

@@ -1,6 +1,8 @@
+mod activity_pub;
 mod login;
 mod posts;
 mod users;
+mod webfinger;
 use actix_web::{
     web::{self},
     Scope,
@@ -8,7 +10,8 @@ use actix_web::{
 
 pub fn router() -> Scope {
     web::scope("")
-        .service(posts::posts_router())
-        .service(users::users_router())
+        .service(webfinger::webfinger)
         .service(login::login)
+        .service(users::users_router())
+        .service(posts::posts_router())
 }
