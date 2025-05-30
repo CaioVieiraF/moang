@@ -10,8 +10,6 @@ use super::OrderedItem;
 #[derive(Deserialize, Serialize)]
 pub struct OrderedCollectionPage {
     id: Url,
-    next: Url,
-    prev: Url,
 
     #[serde(rename = "@context")]
     context: Url,
@@ -85,14 +83,10 @@ impl OrderedCollectionPageBuilder<Url, i64, Vec<OrderedItem>> {
 
         let context = Url::try_from("https://www.w3.org/ns/activitystreams".to_string()).unwrap();
         let part_of = Url::try_from(format!("{base_url}/outbox/posts")).unwrap();
-        let next = Url::try_from(format!("{base_url}/outbox/posts?page=true")).unwrap();
-        let prev = Url::try_from(format!("{base_url}/outbox/posts?page=true")).unwrap();
 
         OrderedCollectionPage {
             context,
             part_of,
-            next,
-            prev,
             id: self.id,
             obj_type: ObjType::OrderedCollectionPage,
             total_items: self.total_items,

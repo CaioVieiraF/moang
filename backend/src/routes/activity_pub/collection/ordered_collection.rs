@@ -2,10 +2,11 @@ use serde::{Deserialize, Serialize};
 
 use crate::routes::activity_pub::{ObjType, Url};
 
+use super::OrderedItem;
+
 #[derive(Deserialize, Serialize)]
 pub struct OrderedCollection {
     id: Url,
-    first: Url,
 
     #[serde(rename = "@context")]
     context: Url,
@@ -15,64 +16,71 @@ pub struct OrderedCollection {
 
     #[serde(rename = "totalItems")]
     total_items: i64,
+
+    #[serde(rename = "orderedItems")]
+    ordered_items: Option<Vec<OrderedItem>>,
 }
 
+#[derive(Default)]
 pub struct NoId;
-pub struct NoFirst;
+#[derive(Default)]
 pub struct NoTotalItems;
 
-pub struct OrderedCollectionBuilder<I, F, T> {
+#[derive(Default)]
+pub struct OrderedCollectionBuilder<I, T> {
     id: I,
-    first: F,
     total_items: T,
+    ordered_items: Option<Vec<OrderedItem>>,
 }
 
-impl OrderedCollectionBuilder<NoId, NoFirst, NoTotalItems> {
+impl OrderedCollectionBuilder<NoId, NoTotalItems> {
     pub fn new() -> Self {
         OrderedCollectionBuilder {
-            id: NoId,
-            first: NoFirst,
-            total_items: NoTotalItems,
+            ..Default::default()
         }
     }
 }
 
-impl<I, F, T> OrderedCollectionBuilder<I, F, T> {
-    pub fn id(self, value: String) -> OrderedCollectionBuilder<Url, F, T> {
+impl<I> OrderedCollectionBuilder<I, NoTotalItems> {
+    pub fn id(self, value: impl Into<String>) -> OrderedCollectionBuilder<Url, NoTotalItems> {
         OrderedCollectionBuilder {
-            id: Url::try_from(value).unwrap(),
-            first: self.first,
+            id: Url::try_from(value.into()).unwrap(),
             total_items: self.total_items,
+            ordered_items: self.ordered_items,
         }
     }
+}
 
-    pub fn first(self, value: String) -> OrderedCollectionBuilder<I, Url, T> {
+impl<T> OrderedCollectionBuilder<Url, T> {
+    pub fn total_items(self, value: i64) -> OrderedCollectionBuilder<Url, i64> {
         OrderedCollectionBuilder {
             id: self.id,
-            first: Url::try_from(value).unwrap(),
-            total_items: self.total_items,
-        }
-    }
-
-    pub fn total_items(self, value: i64) -> OrderedCollectionBuilder<I, F, i64> {
-        OrderedCollectionBuilder {
-            id: self.id,
-            first: self.first,
             total_items: value,
+            ordered_items: self.ordered_items,
         }
     }
 }
 
-impl OrderedCollectionBuilder<Url, Url, i64> {
+impl<I, T> OrderedCollectionBuilder<I, T> {
+    pub fn ordered_items(self, value: Vec<OrderedItem>) -> OrderedCollectionBuilder<I, T> {
+        OrderedCollectionBuilder {
+            id: self.id,
+            total_items: self.total_items,
+            ordered_items: Some(value),
+        }
+    }
+}
+
+impl OrderedCollectionBuilder<Url, i64> {
     pub fn build(self) -> OrderedCollection {
         let context = Url::try_from("https://www.w3.org/ns/activitystreams".to_string()).unwrap();
 
         OrderedCollection {
             context,
             id: self.id,
-            first: self.first,
             obj_type: ObjType::OrderedCollection,
             total_items: self.total_items,
+            ordered_items: self.ordered_items,
         }
     }
 }

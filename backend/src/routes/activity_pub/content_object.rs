@@ -38,18 +38,16 @@ impl From<&Post> for ContentObject {
         dotenv().ok();
         let base_url = env::var("BASE_URL").expect("BASE_URL must be set!");
 
-        let attributed_to = Url::try_from(format!("{base_url}/users/caio")).unwrap();
+        let actor = format!("{base_url}/users/caio");
+        let attributed_to = Url::try_from(actor.clone()).unwrap();
         let date: DateTime<Utc> = value.created_at.into();
-        let url = Url::try_from(format!("{base_url}/outbox/posts/{}", value.id)).unwrap();
-        let likes = Collection::new(
-            Url::try_from(format!("{base_url}/outbox/posts/{}/likes", value.id)).unwrap(),
-        );
-        let shares = Collection::new(
-            Url::try_from(format!("{base_url}/outbox/posts/{}/shares", value.id)).unwrap(),
-        );
-        let replies = Collection::new(
-            Url::try_from(format!("{base_url}/outbox/posts/{}/replies", value.id)).unwrap(),
-        );
+        let url = Url::try_from(format!("{actor}/outbox/{}", value.id)).unwrap();
+        let likes =
+            Collection::new(Url::try_from(format!("{actor}/outbox/{}/likes", value.id)).unwrap());
+        let shares =
+            Collection::new(Url::try_from(format!("{actor}/outbox/{}/shares", value.id)).unwrap());
+        let replies =
+            Collection::new(Url::try_from(format!("{actor}/outbox/{}/replies", value.id)).unwrap());
         let to = vec!["https://www.w3.org/ns/activitystreams#Public"
             .to_string()
             .try_into()

@@ -1,13 +1,9 @@
 use std::env;
 
-use chrono::{DateTime, Utc};
 use dotenv::dotenv;
 use serde::{Deserialize, Serialize};
 
-use crate::{
-    models::Post,
-    routes::activity_pub::{content_object::ContentObject, ObjType, Url},
-};
+use crate::routes::activity_pub::{content_object::ContentObject, ObjType, Url};
 
 #[derive(Deserialize, Serialize)]
 pub struct OrderedItem {
@@ -50,12 +46,9 @@ impl OrderedItemBuilder<NoId, NoPublished, NoObject, NoName> {
 }
 
 impl<I, P, O, N> OrderedItemBuilder<I, P, O, N> {
-    pub fn id(self, value: i32) -> OrderedItemBuilder<Url, P, O, N> {
-        dotenv().ok();
-        let base_url = env::var("BASE_URL").expect("BASE_URL must be set!");
-
+    pub fn id(self, value: impl Into<String>) -> OrderedItemBuilder<Url, P, O, N> {
         OrderedItemBuilder {
-            id: Url::try_from(format!("{base_url}/outbox/posts/{value}")).unwrap(),
+            id: Url::try_from(value.into()).unwrap(),
             published: self.published,
             object: self.object,
             name: self.name,
@@ -101,7 +94,7 @@ impl OrderedItemBuilder<Url, String, ContentObject, String> {
             .to_string()
             .try_into()
             .unwrap()];
-        let cc = vec![format!("{base_url}/followers").try_into().unwrap()];
+        let cc = vec![format!("{}/followers", actor.0).try_into().unwrap()];
 
         OrderedItem {
             id: self.id,
@@ -114,18 +107,5 @@ impl OrderedItemBuilder<Url, String, ContentObject, String> {
             obj_type: ObjType::Create,
             object: self.object,
         }
-    }
-}
-
-impl From<&Post> for OrderedItem {
-    fn from(value: &Post) -> Self {
-        let date: DateTime<Utc> = value.created_at.into();
-        let post = OrderedItemBuilder::new()
-            .id(value.id)
-            .published(format!("{}", date.format("%+")))
-            .object(ContentObject::from(value))
-            .name(value.title.clone())
-            .build();
-        post
     }
 }
