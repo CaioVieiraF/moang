@@ -6,11 +6,13 @@ use serde::{Deserialize, Serialize};
 
 use crate::models::User;
 
-use super::{ObjType, Url};
+use super::{ActivityPub, ObjType, Url};
 
 #[derive(Deserialize, Serialize)]
 pub struct Actor<U = Url> {
-    id: U,
+    #[serde(flatten)]
+    activity_pub: ActivityPub,
+
     inbox: U,
     outbox: U,
     following: U,
@@ -21,12 +23,6 @@ pub struct Actor<U = Url> {
     discoverable: bool,
     indexable: bool,
     name: String,
-
-    #[serde(rename = "@context")]
-    context: Url,
-
-    #[serde(rename = "type")]
-    obj_type: ObjType,
 
     #[serde(rename = "preferredUsername")]
     prefered_username: String,
@@ -47,23 +43,21 @@ impl Actor {
         let base_url = env::var("BASE_URL").expect("BASE_URL must be set!");
         let summary = env::var("USER_SUMMARY").unwrap_or_default();
 
-        let context = Url::try_from("https://www.w3.org/ns/activitystreams".to_string()).unwrap();
-        let id = Url::try_from(format!("{base_url}/users/{name}")).unwrap();
-        let inbox = Url::try_from(format!("{base_url}/inbox")).unwrap();
-        let outbox = Url::try_from(format!("{base_url}/outbox")).unwrap();
-        let liked = Url::try_from(format!("{base_url}/liked")).unwrap();
-        let following = Url::try_from(format!("{base_url}/following")).unwrap();
-        let followers = Url::try_from(format!("{base_url}/followers")).unwrap();
+        let actor = format!("{base_url}/users/{name}");
+        let activity_pub = ActivityPub::new(actor.clone().try_into().unwrap(), ObjType::Person);
+        let inbox = Url::try_from(format!("{actor}/inbox")).unwrap();
+        let outbox = Url::try_from(format!("{actor}/outbox")).unwrap();
+        let liked = Url::try_from(format!("{actor}/liked")).unwrap();
+        let following = Url::try_from(format!("{actor}/following")).unwrap();
+        let followers = Url::try_from(format!("{actor}/followers")).unwrap();
 
         let url = Url::try_from("https://moang.com.br".to_string()).unwrap();
 
         Actor {
+            activity_pub,
             prefered_username: name.clone(),
-            obj_type: ObjType::Person,
             discoverable: true,
             indexable: true,
-            context,
-            id,
             inbox,
             outbox,
             liked,
@@ -80,11 +74,4 @@ impl From<&User> for Actor {
     fn from(value: &User) -> Self {
         Actor::from_user(value.name.clone())
     }
-}
-
-#[get("/{user}")]
-pub async fn get_actor(user: Path<String>) -> HttpResponse {
-    let user = user.into_inner();
-    let actor = Actor::from_user(user);
-    HttpResponse::Ok().json(actor)
 }
