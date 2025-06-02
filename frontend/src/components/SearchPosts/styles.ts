@@ -1,21 +1,20 @@
 import styled from 'styled-components'
 
 export const SearchPostsContainer = styled.form`
-  display: flex;
-  gap: 1rem;
   margin: 1.5rem auto;
+  position: relative;
 
   input {
-    flex: 1;
+    width: 100%;
     border-radius: 3px;
     border: 0;
-    border: 1px solid ${props => props.theme['secondary-700']};
-    background: ${props => props.theme['secondary-900']};
+    border: 1px solid ${props => props.theme['primary']}70;
+    background: ${props => props.theme['primary']}15;
     color: ${props => props.theme['text-300']};
-    padding: 0.5rem;
+    padding: 1rem;
 
     &::placeholder {
-      color: ${props => props.theme['text-700']};
+      color: ${props => props.theme['text-600']};
     }
 
     &:disabled {
@@ -24,13 +23,17 @@ export const SearchPostsContainer = styled.form`
   }
 
   button {
+    position: absolute;
+    right: 0.5rem;
+    top: 0.5rem;
+
     display: flex;
     align-items: center;
     gap: 0.75rem;
 
     border: 0;
     padding: 0.5rem;
-    background: ${props => props.theme['secondary-800']};
+    background: ${props => props.theme['secondary']};
     color: ${props => props.theme['text']};
     font-weight: bold;
     border-radius: 3px;
