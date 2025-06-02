@@ -28,14 +28,14 @@ export const HeaderContainer = styled.header`
 `
 
 export const Logo = styled(Link)`
+  text-shadow: 0 0 15px ${props => props.theme['secondary']};
   text-decoration: none;
   color: ${props => props.theme['accent-100']};
   font-weight: bold;
   font-size: 2rem;
 
   &:hover {
-    color: ${props => props.theme['background-900']};
-    background: ${props => props.theme['accent-200']};
     text-decoration: underline;
+    text-shadow: 0 0 25px ${props => props.theme['secondary-400']};
   }
 `
