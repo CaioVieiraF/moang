@@ -30,6 +30,9 @@ pub struct Actor<U = Url> {
 
     #[serde(rename = "preferredUsername")]
     prefered_username: String,
+
+    #[serde(rename = "publicKey")]
+    public_key: PubKey,
 }
 
 #[derive(Deserialize, Serialize)]
@@ -51,12 +54,12 @@ impl Icon {
     }
 }
 
-#[derive(Deserialize, Serialize, Default)]
-struct PubKey<'a> {
-    id: &'a str,
-    owner: &'a str,
+#[derive(Deserialize, Serialize)]
+struct PubKey {
+    id: Url,
+    owner: Url,
     #[serde(rename = "publicKeyPem")]
-    public_key_pem: &'a str,
+    public_key_pem: String,
 }
 
 impl Actor {
@@ -68,6 +71,16 @@ impl Actor {
         let summary = env::var("USER_SUMMARY").unwrap_or_default();
 
         let actor = format!("{base_url}/users/{name}");
+
+        let pub_key = match env::var("PUBLIC_KEY") {
+            Ok(key) => PubKey {
+                owner: actor.clone().try_into().unwrap(),
+                id: actor.clone().try_into().unwrap(),
+                public_key_pem: key,
+            },
+            Err(_) => panic!("PUBLIC_KEY variable not found!"),
+        };
+
         let activity_pub = ActivityPub::new(actor.clone().try_into().unwrap(), ObjType::Person);
         let inbox = Url::try_from(format!("{actor}/inbox")).unwrap();
         let outbox = Url::try_from(format!("{actor}/outbox")).unwrap();
@@ -83,8 +96,9 @@ impl Actor {
             prefered_username: name.clone(),
             discoverable: true,
             indexable: true,
-            published: "2024-22-08T00:00:00Z".into(),
+            published: "2025-29-05T00:00:00Z".into(),
             attribution_domains: vec![base_url_name.try_into().unwrap()],
+            public_key: pub_key,
             icon,
             inbox,
             outbox,
