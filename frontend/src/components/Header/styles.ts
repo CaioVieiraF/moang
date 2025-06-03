@@ -16,10 +16,10 @@ export const HeaderContainer = styled.header`
 
     a {
       text-decoration: none;
-      color: ${props => props.theme['text']};
+      color: ${props => props.theme['accent-100']};
 
       &:hover {
-        color: ${props => props.theme['background-900']};
+        color: ${props => props.theme['secondary-950']};
         background: ${props => props.theme['accent-200']};
         text-decoration: underline;
       }
@@ -28,14 +28,18 @@ export const HeaderContainer = styled.header`
 `
 
 export const Logo = styled(Link)`
-  text-shadow: 0 0 15px ${props => props.theme['secondary']};
-  text-decoration: none;
   color: ${props => props.theme['accent-100']};
+  padding: 0.25rem;
+  text-decoration: none;
+  border-radius: 3px;
   font-weight: bold;
   font-size: 2rem;
 
   &:hover {
+    color: ${props => props.theme['secondary-950']};
+    background-color: ${props => props.theme['accent-100']};
+
     text-decoration: underline;
-    text-shadow: 0 0 25px ${props => props.theme['secondary-400']};
+    transition: text-shadow 0.1s, color 0.1s, background-color 0.1s;
   }
 `

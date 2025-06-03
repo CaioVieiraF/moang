@@ -25,7 +25,6 @@ export const PostTitle = styled.header`
 
   padding: 2.5rem;
   gap: 1rem;
-  border-bottom: 2px solid ${props => props.theme['secondary-800']};
   color: ${props => props.theme['accent-100']};
 
   background: #FFFFFF05;

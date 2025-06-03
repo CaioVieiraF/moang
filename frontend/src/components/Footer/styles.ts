@@ -13,12 +13,12 @@ export const FooterContainer = styled.footer`
 
   a {
     text-decoration: none;
-    color: ${props => props.theme['text-300']};
+    color: ${props => props.theme['accent-100']};
     font-size: 20px;
 
     &:hover {
-      color: ${props => props.theme['secondary-900']};
-      background: ${props => props.theme['text-300']};
+      color: ${props => props.theme['secondary-950']};
+      background: ${props => props.theme['accent-100']};
     }
   }
 `

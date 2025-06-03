@@ -9,18 +9,24 @@ export const SearchPostsContainer = styled.form`
     border-radius: 3px;
     border: 0;
     border: 1px solid ${props => props.theme['primary']}70;
+    border-bottom: 1px solid ${props => props.theme['primary-400']}40;
+    border-right: 1px solid ${props => props.theme['primary-400']}40;
     background: #FFFFFF10;
     backdrop-filter: blur(45px);
-    box-shadow: 0 0 25px rgba(0, 0, 0, 0.1), inset 0 0 10px 4px ${p => p.theme['secondary-950']}30;
+    box-shadow: 0 0 25px rgba(0, 0, 0, 0.1), inset 0 0 10px 6px ${p => p.theme['secondary-950']}30;
     color: ${props => props.theme['text']};
     padding: 1rem;
 
     &::placeholder {
-      color: ${props => props.theme['text-300']};
+      color: ${props => props.theme['secondary-700']};
     }
 
     &:disabled {
       cursor: not-allowed;
+    }
+
+    &:focus {
+      box-shadow: 0 0 25px rgba(0, 0, 0, 0.3), inset 0 0 10px 4px ${p => p.theme['secondary-950']}30;
     }
   }
 
@@ -35,7 +41,8 @@ export const SearchPostsContainer = styled.form`
 
     border: 0;
     padding: 0.5rem;
-    background: ${props => props.theme['secondary']};
+    background: ${props => props.theme['secondary-500']};
+    background: linear-gradient(to bottom right, ${props => props.theme['secondary-500']}, ${props => props.theme['secondary-700']});
     color: ${props => props.theme['accent-100']};
     font-weight: bold;
     border-radius: 3px;
@@ -48,10 +55,11 @@ export const SearchPostsContainer = styled.form`
     }
 
     &:not(:disabled):hover {
-      background: ${props => props.theme['secondary-500']};
+      background: ${props => props.theme['secondary']};
+      background: linear-gradient(to bottom right, ${props => props.theme['secondary-300']}, ${props => props.theme['secondary-500']});
       color: ${props => props.theme['accent-200']};
       box-shadow: 0 0 8px 2px ${props => props.theme['secondary-950']};
-      transition: 0.1s;
+      transition: background-color 0.2s, box-shadow 0.1s;
     }
   }
 `

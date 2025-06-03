@@ -14,12 +14,12 @@ export const GlobalStyle = createGlobalStyle`
 
     body {
         background: ${props => props.theme['background']};
-        background: linear-gradient(to top left, ${props => props.theme['background-900']}, ${props => props.theme['background']});
+        background: linear-gradient(to bottom right, ${props => props.theme['background-900']}, ${props => props.theme['background']});
         color: ${props => props.theme['text-100']};
 
         -webkit-font-smoothing: antialiased;
     }
-    
+
     body, input, textarea, button {
         font-family: 'Roboto', sans-serif;
         font-weight: 400;
