@@ -25,10 +25,15 @@ export const PostTitle = styled.header`
 
   padding: 2.5rem;
   gap: 1rem;
-  border-bottom: 2px solid ${props => props.theme['secondary-800']};
   color: ${props => props.theme['accent-100']};
 
-  background: radial-gradient(farthest-corner at 50% 120%, ${props => props.theme['secondary-900']} 0%, rgba(0, 0, 0, 0) 70% 100%);
+  background: #FFFFFF05;
+  border: 1px solid ${props => props.theme['secondary-400']}70;
+  border-bottom: 1px solid ${props => props.theme['secondary-400']}40;
+  border-right: 1px solid ${props => props.theme['secondary-400']}40;
+  border-radius: 3px;
+  box-shadow: 0 25px 45px rgba(0, 0, 0, .1);
+  backdrop-filter: blur(45px);
 
   small {
     color: ${props => props.theme['secondary-500']};

@@ -9,9 +9,13 @@ export const LinkContainer = styled(Link)`
   text-decoration: none;
 
   color: ${props => props.theme['text']};
-  background: radial-gradient(at 50% 200%, ${props => props.theme['accent-900']} 0%, transparent 100%);
-  border-top: 2px solid ${props => props.theme.background};
-  border-bottom: 2px solid ${props => props.theme['accent-600']};
+  color: ${props => props.theme['accent-100']};
+  background: #FFFFFF05;
+  border: 1px solid ${props => props.theme['secondary-400']}70;
+  border-bottom: 1px solid ${props => props.theme['secondary-400']}40;
+  border-right: 1px solid ${props => props.theme['secondary-400']}40;
+  box-shadow: 0 25px 45px rgba(0, 0, 0, .1);
+  backdrop-filter: blur(45px);
   border-radius: 3px;
   margin-bottom: 1rem;
   padding: 2rem;
@@ -23,13 +27,11 @@ export const LinkContainer = styled(Link)`
   &:hover {
     cursor: pointer;
     font-weight: bold;
-    background: ${props => props.theme['secondary-900']};
-    background: radial-gradient(at 50% 200%, ${props => props.theme['secondary-800']} 0%, transparent 100%);
     color: ${props => props.theme['accent-200']};
-    /*box-shadow: 0 0 10px 2px ${props => props.theme['primary-900']};*/
+    background: ${props => props.theme['secondary-400']}10;
+    box-shadow: 0 25px 45px rgba(0, 0, 0, .2);
 
-    border-bottom: 2px solid ${props => props.theme['secondary-800']};
-    transition: 0.1s;
+    transition: background-color 0.2s, box-shadow 0.2s;
 
     h3 {
       text-decoration: underline;

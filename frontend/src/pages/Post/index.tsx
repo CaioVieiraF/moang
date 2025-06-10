@@ -20,7 +20,6 @@ export function Post() {
     day: 'numeric',
     hour: 'numeric',
     minute: 'numeric',
-    second: 'numeric',
     hour12: false,
   })
   const formatedDate = date.format(new Date(post.published))
