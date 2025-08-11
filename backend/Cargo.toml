@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-actix-web = { version = "4", features = ["cookies"] }
+actix-web = { version = "4", features = ["cookies", "openssl"] }
 dotenv = "0.15.0"
 serde = { version = "1", features = ["derive"]}
 diesel = { version = "2.2.0", features = ["postgres"] }
@@ -19,3 +19,8 @@ actix-session = { version = "0.10.1", features = ["cookie-session"] }
 actix-cors = "0.7.1"
 env_logger = "0.11.8"
 serde_json = "1.0.140"
+base64ct = { version = "1.7.3", features = ["alloc"] }
+httpdate = "1.0.3"
+http-signature-normalization = "0.7.0"
+sha2 = "0.10.9"
+openssl = "0.10.73"

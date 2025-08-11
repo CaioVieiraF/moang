@@ -1,4 +1,4 @@
-use std::str::FromStr;
+use std::{fmt::Display, str::FromStr};
 
 use actix_web::http::{uri::InvalidUri, Uri};
 use serde::{Deserialize, Serialize};
@@ -9,6 +9,12 @@ pub mod content_object;
 
 #[derive(Deserialize, Serialize, Clone)]
 pub struct Url(String);
+
+impl Display for Url {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
 
 #[derive(Deserialize, Serialize, Clone)]
 pub struct ActivityPub {
