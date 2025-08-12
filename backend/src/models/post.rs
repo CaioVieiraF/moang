@@ -1,9 +1,13 @@
 use std::time::SystemTime;
 
-use crate::schema::posts;
 use chrono::{DateTime, Utc};
-use diesel::prelude::*;
+use diesel::{
+    prelude::{Insertable, Queryable},
+    Selectable,
+};
 use serde::{Deserialize, Serialize};
+
+use crate::schema::posts;
 
 #[derive(Queryable, Selectable, Serialize)]
 #[diesel(table_name = crate::schema::posts)]
@@ -52,21 +56,4 @@ pub struct NewPost {
     pub is_public: bool,
     pub slug: String,
     pub author: String,
-}
-
-#[derive(Queryable, Selectable, Serialize, Insertable)]
-#[diesel(table_name = crate::schema::users)]
-#[diesel(check_for_backend(diesel::pg::Pg))]
-pub struct User {
-    pub id: String,
-    pub name: String,
-    pub email: String,
-    pub password: String,
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct Claims {
-    pub exp: usize,
-    pub sub: String,
-    pub iat: usize,
 }

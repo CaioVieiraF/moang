@@ -1,5 +1,5 @@
 import { Search } from 'react-feather'
-import { SearchPostsContainer } from './styles'
+import { SearchButton, SearchInput, SearchPostsContainer } from './styles'
 import { useForm } from 'react-hook-form'
 import * as z from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -22,8 +22,8 @@ export function SearchPosts() {
 
   return (
     <SearchPostsContainer onSubmit={handleSubmit(handleSearch)}>
-      <input type="text" placeholder="Buscar um post..." {...register('query')} disabled={isSubmitting} />
-      <button disabled={isSubmitting}><Search size={20} /> Buscar</button>
+      <SearchInput type="text" placeholder="Buscar um post..." {...register('query')} disabled={isSubmitting} />
+      <SearchButton disabled={isSubmitting}><Search size={20} /> Buscar</SearchButton>
     </SearchPostsContainer>
   )
 }

@@ -1,4 +1,4 @@
-mod activity_pub;
+pub mod activity_pub;
 mod login;
 mod posts;
 mod users;

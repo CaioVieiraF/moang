@@ -8,12 +8,10 @@ use actix_web::{
     HttpRequest, HttpResponse,
 };
 use diesel::prelude::*;
-use dotenv::dotenv;
 
 #[get("")]
 pub async fn get_outbox(path: Path<String>, req: HttpRequest) -> HttpResponse {
     use crate::schema::posts::dsl::*;
-    dotenv().ok();
 
     if has_user(path.into_inner()).is_none() {
         return HttpResponse::NotFound().finish();

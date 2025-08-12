@@ -16,7 +16,6 @@ pub struct Actor<U = Url> {
     outbox: U,
     following: U,
     followers: U,
-    liked: U,
     url: U,
     published: String,
     summary: String,
@@ -75,7 +74,7 @@ impl Actor {
         let pub_key = match env::var("PUBLIC_KEY") {
             Ok(key) => PubKey {
                 owner: actor.clone().try_into().unwrap(),
-                id: actor.clone().try_into().unwrap(),
+                id: format!("{actor}#main-key").try_into().unwrap(),
                 public_key_pem: key,
             },
             Err(_) => panic!("PUBLIC_KEY variable not found!"),
@@ -84,7 +83,6 @@ impl Actor {
         let activity_pub = ActivityPub::new(actor.clone().try_into().unwrap(), ObjType::Person);
         let inbox = Url::try_from(format!("{actor}/inbox")).unwrap();
         let outbox = Url::try_from(format!("{actor}/outbox")).unwrap();
-        let liked = Url::try_from(format!("{actor}/liked")).unwrap();
         let following = Url::try_from(format!("{actor}/following")).unwrap();
         let followers = Url::try_from(format!("{actor}/followers")).unwrap();
 
@@ -102,7 +100,6 @@ impl Actor {
             icon,
             inbox,
             outbox,
-            liked,
             name,
             following,
             followers,

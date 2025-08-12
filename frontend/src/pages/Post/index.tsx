@@ -3,6 +3,7 @@ import { PostContainer, PostTitle, PostTitleBackLink } from './styles'
 import { useParams } from 'react-router-dom'
 import { api } from '../../lib/axios'
 import { PostObject } from '../Posts'
+import Markdown from 'react-markdown'
 
 export function Post() {
   const { id } = useParams()
@@ -41,7 +42,9 @@ export function Post() {
         <h1>{post.name}</h1>
         <small>postado em {formatedDate}</small>
       </PostTitle>
-      <article>{post.object.content}</article>
+      <article>
+        <Markdown>{post.object.content}</Markdown>
+      </article>
     </PostContainer>
   )
 }
