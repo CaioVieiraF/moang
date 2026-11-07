@@ -8,6 +8,7 @@ export interface PostObject {
   id: string,
   name: string,
   object: {
+    id: string
     content: string
     source?: {
       content: string

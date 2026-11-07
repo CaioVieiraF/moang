@@ -8,6 +8,7 @@ export function Header() {
       <Logo to="/">Moang</Logo>
       <nav>
         <Link to="https://moang.com.br/feed.xml"><Rss size={18} /></Link>
+        <NavLink to="/timeline" title="timeline">Timeline</NavLink>
         <NavLink to="/about" title="about">Sobre</NavLink>
       </nav>
     </HeaderContainer>

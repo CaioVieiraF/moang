@@ -34,6 +34,24 @@ export const PostTitle = styled.header`
   }
 `
 
+export const PostReplies = styled.section`
+  margin: 2rem;
+  padding: 1rem;
+  border-top: 2px solid ${props => props.theme['secondary']};
+
+  h2 {
+    margin-bottom: 1rem;
+  }
+
+  div {
+    margin-bottom: 1.5rem;
+  }
+
+  a {
+    color: ${props => props.theme['accent']};
+  }
+`
+
 export const PostTitleBackLink = styled(Link)`
   margin-right: auto;
   text-decoration: none;
