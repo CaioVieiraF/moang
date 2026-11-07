@@ -6,6 +6,7 @@ use diesel::{
     Selectable,
 };
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 use crate::schema::posts;
 
@@ -20,6 +21,9 @@ pub struct Post {
     pub slug: String,
     pub created_at: SystemTime,
     pub author: String,
+    pub ap_id: Uuid,
+    pub updated_at: SystemTime,
+    pub visibility: String,
 }
 
 #[derive(Serialize)]
@@ -31,11 +35,15 @@ pub struct GetPost {
     pub slug: String,
     pub created_at: String,
     pub author: String,
+    pub ap_id: String,
+    pub updated_at: String,
+    pub visibility: String,
 }
 
 impl From<&Post> for GetPost {
     fn from(value: &Post) -> Self {
         let date: DateTime<Utc> = value.created_at.into();
+        let updated: DateTime<Utc> = value.updated_at.into();
         GetPost {
             id: value.id,
             title: value.title.clone(),
@@ -44,6 +52,9 @@ impl From<&Post> for GetPost {
             slug: value.slug.clone(),
             created_at: format!("{}", date.format("%+")),
             author: value.author.clone(),
+            ap_id: value.ap_id.to_string(),
+            updated_at: format!("{}", updated.format("%+")),
+            visibility: value.visibility.clone(),
         }
     }
 }
@@ -56,4 +67,5 @@ pub struct NewPost {
     pub is_public: bool,
     pub slug: String,
     pub author: String,
+    pub visibility: String,
 }

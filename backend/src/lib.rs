@@ -1,3 +1,4 @@
+pub mod config;
 pub mod models;
 pub mod routes;
 pub mod schema;
@@ -7,9 +8,19 @@ use std::env;
 
 use actix_session::Session;
 use diesel::prelude::*;
+use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
 use dotenv::dotenv;
 use jsonwebtoken::{DecodingKey, Validation};
 use models::Claims;
+
+pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations");
+
+pub fn run_migrations() {
+    let connection = &mut establish_connection();
+    connection
+        .run_pending_migrations(MIGRATIONS)
+        .expect("Error running database migrations");
+}
 
 fn establish_connection() -> PgConnection {
     dotenv().ok();
