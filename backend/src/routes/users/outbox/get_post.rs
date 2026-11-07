@@ -1,16 +1,16 @@
-use crate::{
-    establish_connection,
-    models::Post,
-    routes::{
-        activity_pub::collection::OrderedItem,
-        users::has_user,
-    },
-};
+use actix_session::Session;
 use actix_web::{get, web::Json, web::Path, HttpResponse};
 use diesel::prelude::*;
 
+use crate::{
+    establish_connection,
+    models::Post,
+    routes::{activity_pub::collection::OrderedItem, users::has_user},
+    user_is_loged_in,
+};
+
 #[get("/posts/{post_id}")]
-pub async fn get_post(path: Path<(String, i32)>) -> HttpResponse {
+pub async fn get_post(session: Session, path: Path<(String, i32)>) -> HttpResponse {
     use crate::schema::posts::dsl::*;
 
     let (username, post_id) = path.into_inner();
@@ -28,14 +28,20 @@ pub async fn get_post(path: Path<(String, i32)>) -> HttpResponse {
         .optional();
 
     match query_result {
-        Ok(Some(retrieved_post)) => match OrderedItem::from_post(&retrieved_post, &username) {
-            Ok(activity) => HttpResponse::Ok()
-                .content_type(
-                    "application/activity+json; profile=\"https://www.w3.org/ns/activitystreams\"",
-                )
-                .json(Json(activity)),
-            Err(error) => HttpResponse::InternalServerError().body(error),
-        },
+        Ok(Some(retrieved_post)) => {
+            if retrieved_post.visibility == "private" && !user_is_loged_in(&session) {
+                return HttpResponse::NotFound().finish();
+            }
+
+            match OrderedItem::from_post(&retrieved_post, &username) {
+                Ok(activity) => HttpResponse::Ok()
+                    .content_type(
+                        "application/activity+json; profile=\"https://www.w3.org/ns/activitystreams\"",
+                    )
+                    .json(Json(activity)),
+                Err(error) => HttpResponse::InternalServerError().body(error),
+            }
+        }
         Ok(None) => HttpResponse::NotFound().finish(),
         Err(_) => HttpResponse::InternalServerError().finish(),
     }

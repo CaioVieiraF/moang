@@ -1,3 +1,4 @@
+use actix_session::Session;
 use actix_web::{get, web::Json, web::Path, HttpResponse};
 use diesel::prelude::*;
 use serde_json::json;
@@ -12,10 +13,11 @@ use crate::{
         users::{has_user, timeline::RemotePostView},
     },
     schema::{posts, remote_actors, remote_posts},
+    user_is_loged_in,
 };
 
 #[get("/posts/{ap_id}")]
-pub async fn get_object(path: Path<(String, String)>) -> HttpResponse {
+pub async fn get_object(session: Session, path: Path<(String, String)>) -> HttpResponse {
     let (username, ap_id) = path.into_inner();
     let username = username.to_lowercase();
     let Some(user) = has_user(username.clone()) else {
@@ -35,7 +37,9 @@ pub async fn get_object(path: Path<(String, String)>) -> HttpResponse {
         .optional();
 
     match post {
-        Ok(Some(post)) if post.visibility != "private" => {
+        Ok(Some(post))
+            if post.visibility != "private" || user_is_loged_in(&session) =>
+        {
             match ContentObject::from_post(&post, &username) {
                 Ok(object) => HttpResponse::Ok()
                     .content_type(

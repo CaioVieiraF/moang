@@ -138,7 +138,7 @@ fn excerpt(body: &str, length: usize, full_url: &str) -> String {
     html::push_html(&mut html_output, parser);
 
     html_output.push_str(&format!(
-        "<p><a href=\"{full_url}\">Read the full post</a></p>"
+        "<p><a href=\"{full_url}\">Ler o post completo</a></p>"
     ));
 
     ammonia::clean(&html_output)
@@ -155,4 +155,41 @@ fn truncate(value: &str, length: usize) -> String {
     }
     result.push_str("...");
     result
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{audience, truncate, PUBLIC_COLLECTION};
+
+    #[test]
+    fn public_posts_are_addressed_to_the_public_collection() {
+        let (to, cc) = audience("public", "https://example.com/followers").unwrap();
+
+        assert_eq!(to[0].as_str(), PUBLIC_COLLECTION);
+        assert_eq!(cc[0].as_str(), "https://example.com/followers");
+    }
+
+    #[test]
+    fn unlisted_posts_put_the_public_collection_in_cc() {
+        let (to, cc) = audience("unlisted", "https://example.com/followers").unwrap();
+
+        assert_eq!(to[0].as_str(), "https://example.com/followers");
+        assert_eq!(cc[0].as_str(), PUBLIC_COLLECTION);
+    }
+
+    #[test]
+    fn private_posts_have_no_audience() {
+        let (to, cc) = audience("private", "https://example.com/followers").unwrap();
+
+        assert!(to.is_empty());
+        assert!(cc.is_empty());
+    }
+
+    #[test]
+    fn truncation_keeps_the_text_short() {
+        let text = "uma frase um pouco maior do que o limite";
+
+        assert!(truncate(text, 10).ends_with("..."));
+        assert_eq!(truncate("curto", 10), "curto");
+    }
 }
