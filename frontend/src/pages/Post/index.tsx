@@ -43,7 +43,7 @@ export function Post() {
         <small>postado em {formatedDate}</small>
       </PostTitle>
       <article>
-        <Markdown>{post.object.content}</Markdown>
+        <Markdown>{post.object.source?.content ?? post.object.content}</Markdown>
       </article>
     </PostContainer>
   )

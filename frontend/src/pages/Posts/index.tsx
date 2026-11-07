@@ -9,6 +9,10 @@ export interface PostObject {
   name: string,
   object: {
     content: string
+    source?: {
+      content: string
+      mediaType: string
+    }
   },
   published: Date
 }
