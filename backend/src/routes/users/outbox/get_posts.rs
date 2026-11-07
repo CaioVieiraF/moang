@@ -1,58 +1,52 @@
 use crate::{
+    config::AppConfig,
     establish_connection,
     models::Post,
     routes::{
-        activity_pub::{
-            collection::{OrderedCollectionPageBuilder, OrderedItem, OrderedItemBuilder},
-            content_object::ContentObject,
-        },
+        activity_pub::collection::{OrderedCollectionPageBuilder, OrderedItem},
         users::has_user,
     },
 };
-use actix_web::{
-    get,
-    web::{Json, Path},
-    HttpRequest, HttpResponse,
-};
-use chrono::{DateTime, Utc};
+use actix_web::{get, web::Json, web::Path, HttpResponse};
 use diesel::prelude::*;
-use dotenv::dotenv;
 
 #[get("/posts")]
-pub async fn get_posts(path: Path<String>, req: HttpRequest) -> HttpResponse {
+pub async fn get_posts(path: Path<String>) -> HttpResponse {
     use crate::schema::posts::dsl::*;
-    dotenv().ok();
 
-    if has_user(path.into_inner()).is_none() {
+    let username = path.into_inner().to_lowercase();
+    if has_user(username.clone()).is_none() {
         return HttpResponse::NotFound().finish();
     }
 
+    let config = AppConfig::get();
     let connection = &mut establish_connection();
+    let total_items = match posts
+        .filter(is_public.eq(true))
+        .count()
+        .get_result::<i64>(connection)
+    {
+        Ok(total) => total,
+        Err(error) => return HttpResponse::InternalServerError().body(error.to_string()),
+    };
+
     let query_result = posts
         .filter(is_public.eq(true))
+        .order(created_at.desc())
         .select(Post::as_select())
         .load(connection);
 
     match query_result {
-        Ok(retreived_posts) => {
-            let ordered_items = retreived_posts
+        Ok(retrieved_posts) => {
+            let ordered_items = retrieved_posts
                 .iter()
-                .map(|post| {
-                    let date: DateTime<Utc> = post.created_at.into();
-                    let post_id = format!("{}/{}", req.full_url(), post.id);
-                    let post = OrderedItemBuilder::new()
-                        .id(post_id)
-                        .published(format!("{}", date.format("%+")))
-                        .object(ContentObject::from(post))
-                        .name(post.title.clone())
-                        .build();
-                    post
-                })
+                .filter_map(|post| OrderedItem::from_post(post, &username).ok())
                 .collect::<Vec<OrderedItem>>();
 
             let all_posts = OrderedCollectionPageBuilder::new()
-                .id(req.full_url())
-                .total_items(ordered_items.len() as i64)
+                .id(format!("{}/posts", config.outbox_url(&username)))
+                .part_of(config.outbox_url(&username))
+                .total_items(total_items)
                 .ordered_items(ordered_items)
                 .build();
 

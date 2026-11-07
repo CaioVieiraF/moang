@@ -15,18 +15,14 @@ pub struct Collection {
 
 impl Collection {
     pub fn new(id: Url) -> Collection {
+        Self::with_total(id, 0)
+    }
+
+    pub fn with_total(id: Url, total_items: i32) -> Collection {
         Collection {
             id,
             obj_type: ObjType::Collection,
-            total_items: 0,
+            total_items,
         }
-    }
-
-    pub fn add_like(&mut self) {
-        self.total_items += 1;
-    }
-
-    pub fn set_like(&mut self, likes: i32) {
-        self.total_items = likes;
     }
 }

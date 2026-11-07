@@ -71,7 +71,7 @@ impl<T> OrderedCollectionBuilder<Url, T> {
     }
 
     pub fn first(self, value: impl Display) -> OrderedCollectionBuilder<Url, T> {
-        let first = format!("{}/{value}", self.id.0);
+        let first = format!("{}/{value}", self.id.as_str());
         OrderedCollectionBuilder {
             first: Some(first.try_into().unwrap()),
             ..self
@@ -85,7 +85,7 @@ impl OrderedCollectionBuilder<Url, i64> {
         let mut extra = HashMap::new();
 
         if let Some(ordered_items) = self.ordered_items {
-            extra.insert("ordered_items".to_string(), json!(ordered_items));
+            extra.insert("orderedItems".to_string(), json!(ordered_items));
         }
 
         if let Some(first) = self.first {

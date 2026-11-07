@@ -1,29 +1,28 @@
 use crate::{
+    config::AppConfig,
     establish_connection,
     routes::{activity_pub::collection::OrderedCollectionBuilder, users::has_user},
 };
-use actix_web::{
-    get,
-    web::{Json, Path},
-    HttpRequest, HttpResponse,
-};
+use actix_web::{get, web::Json, web::Path, HttpResponse};
 use diesel::prelude::*;
 
 #[get("")]
-pub async fn get_outbox(path: Path<String>, req: HttpRequest) -> HttpResponse {
+pub async fn get_outbox(path: Path<String>) -> HttpResponse {
     use crate::schema::posts::dsl::*;
 
-    if has_user(path.into_inner()).is_none() {
+    let username = path.into_inner().to_lowercase();
+    if has_user(username.clone()).is_none() {
         return HttpResponse::NotFound().finish();
     }
 
+    let config = AppConfig::get();
     let connection = &mut establish_connection();
-    let query_result = posts.count().get_result(connection);
+    let query_result = posts.filter(is_public).count().get_result(connection);
 
     match query_result {
         Ok(total_items) => {
             let all_posts = OrderedCollectionBuilder::new()
-                .id(req.full_url())
+                .id(config.outbox_url(&username))
                 .total_items(total_items)
                 .first("posts")
                 .build();

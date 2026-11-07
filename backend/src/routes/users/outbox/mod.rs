@@ -2,6 +2,7 @@ mod create_post;
 mod get_outbox;
 mod get_post;
 mod get_posts;
+pub mod publish;
 
 use actix_web::{web, Scope};
 

@@ -17,6 +17,7 @@ struct NewPostRequest {
     body: String,
     title: String,
     is_public: bool,
+    visibility: Option<String>,
 }
 
 #[post("")]
@@ -51,31 +52,45 @@ pub async fn create_post(session: Session, new_post_request: Json<NewPostRequest
     }
 
     let new_post_request = new_post_request.into_inner();
+    let visibility = match new_post_request.visibility.as_deref() {
+        Some("public") => "public",
+        Some("unlisted") => "unlisted",
+        Some("followers") => "followers",
+        Some("private") => "private",
+        Some(_) => return HttpResponse::BadRequest().body("Invalid visibility"),
+        None if new_post_request.is_public => "public",
+        None => "private",
+    };
+
     let new_post = NewPost {
         title: new_post_request.title.clone(),
         body: new_post_request.body,
-        is_public: new_post_request.is_public,
+        is_public: visibility == "public" || visibility == "unlisted",
         slug: slugify(new_post_request.title),
         author: user_id_query.unwrap(),
+        visibility: visibility.to_string(),
     };
     let query_result = diesel::insert_into(posts::table)
         .values(&new_post)
         .returning(Post::as_returning())
-        .execute(connection);
+        .get_result::<Post>(connection);
 
-    if query_result.is_ok() {
-        let gemini_post = create_gemini_post(new_post).await;
-        if gemini_post.is_err() {
-            HttpResponse::InternalServerError().body("Error creating gemini post")
-        } else {
-            HttpResponse::Created().finish()
-        }
-    } else {
-        HttpResponse::InternalServerError().body("Error creating post on DB")
+    if query_result.is_err() {
+        return HttpResponse::InternalServerError().body("Error creating post on DB");
     }
+
+    let gemini_post = create_gemini_post(&new_post).await;
+    if gemini_post.is_err() {
+        return HttpResponse::InternalServerError().body("Error creating gemini post");
+    }
+
+    let post = query_result.unwrap();
+    crate::routes::users::outbox::publish::publish_post(&post, &new_post.author);
+
+    HttpResponse::Created().finish()
 }
 
-async fn create_gemini_post(post: NewPost) -> tokio::io::Result<()> {
+async fn create_gemini_post(post: &NewPost) -> tokio::io::Result<()> {
     let mut gemini_content = format!("# {}\n\n", &post.title);
     gemini_content.push_str(&post.body);
     gemini_content.push_str("\n\n=> /index.gmi HOME");
