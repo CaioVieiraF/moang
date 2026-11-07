@@ -2,7 +2,7 @@ mod create_user;
 mod delete_user;
 mod get_user;
 mod inbox;
-mod outbox;
+pub mod outbox;
 mod user_router;
 
 use actix_web::{web, Scope};
@@ -16,7 +16,7 @@ pub fn has_user(user_name: String) -> Option<User> {
     let connection = &mut establish_connection();
     let query_result = users
         .select(User::as_select())
-        .filter(name.eq(user_name))
+        .filter(name.eq(user_name.to_lowercase()))
         .first(connection);
 
     query_result.ok()
