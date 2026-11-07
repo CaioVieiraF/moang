@@ -1,8 +1,12 @@
 mod create_user;
 mod delete_user;
+mod followers;
+mod following;
 mod get_user;
 mod inbox;
 pub mod outbox;
+mod posts;
+mod timeline;
 mod user_router;
 
 use actix_web::{web, Scope};
