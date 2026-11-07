@@ -11,13 +11,17 @@ pub async fn get_outbox(path: Path<String>) -> HttpResponse {
     use crate::schema::posts::dsl::*;
 
     let username = path.into_inner().to_lowercase();
-    if has_user(username.clone()).is_none() {
+    let Some(user) = has_user(username.clone()) else {
         return HttpResponse::NotFound().finish();
-    }
+    };
 
     let config = AppConfig::get();
     let connection = &mut establish_connection();
-    let query_result = posts.filter(is_public).count().get_result(connection);
+    let query_result = posts
+        .filter(author.eq(&user.id))
+        .filter(is_public)
+        .count()
+        .get_result(connection);
 
     match query_result {
         Ok(total_items) => {

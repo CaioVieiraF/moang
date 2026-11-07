@@ -15,13 +15,14 @@ pub async fn get_posts(path: Path<String>) -> HttpResponse {
     use crate::schema::posts::dsl::*;
 
     let username = path.into_inner().to_lowercase();
-    if has_user(username.clone()).is_none() {
+    let Some(user) = has_user(username.clone()) else {
         return HttpResponse::NotFound().finish();
-    }
+    };
 
     let config = AppConfig::get();
     let connection = &mut establish_connection();
     let total_items = match posts
+        .filter(author.eq(&user.id))
         .filter(is_public.eq(true))
         .count()
         .get_result::<i64>(connection)
@@ -31,6 +32,7 @@ pub async fn get_posts(path: Path<String>) -> HttpResponse {
     };
 
     let query_result = posts
+        .filter(author.eq(&user.id))
         .filter(is_public.eq(true))
         .order(created_at.desc())
         .select(Post::as_select())
