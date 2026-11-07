@@ -140,7 +140,7 @@ fn process_activity(
 ) -> Result<(), String> {
     match activity_type {
         "Follow" => handle_follow(payload, local_user, remote_actor),
-        "Undo" => handle_undo(local_user, remote_actor),
+        "Undo" => handle_undo(payload, local_user, remote_actor),
         "Accept" => set_following_accepted(local_user, remote_actor, true),
         "Reject" => remove_following(local_user, remote_actor),
         "Create" => handle_create(payload, remote_actor),
@@ -216,7 +216,15 @@ fn send_accept(
     enqueue_activity(&activity_id, std::slice::from_ref(&remote_actor.inbox_url))
 }
 
-fn handle_undo(local_user: &User, remote_actor: &RemoteActor) -> Result<(), String> {
+fn handle_undo(
+    payload: &Value,
+    local_user: &User,
+    remote_actor: &RemoteActor,
+) -> Result<(), String> {
+    if !undo_targets_follow(payload, remote_actor) {
+        return Ok(());
+    }
+
     let connection = &mut establish_connection();
     diesel::delete(
         followers::table
@@ -227,6 +235,32 @@ fn handle_undo(local_user: &User, remote_actor: &RemoteActor) -> Result<(), Stri
     .map_err(|error| error.to_string())?;
 
     Ok(())
+}
+
+fn undo_targets_follow(payload: &Value, remote_actor: &RemoteActor) -> bool {
+    let Some(object) = payload.get("object") else {
+        return false;
+    };
+
+    if object.get("type").and_then(Value::as_str) == Some("Follow") {
+        return true;
+    }
+
+    let Some(object_id) = id_of(object) else {
+        return false;
+    };
+
+    let connection = &mut establish_connection();
+    activities::table
+        .find(&object_id)
+        .filter(activities::actor_id.eq(&remote_actor.id))
+        .filter(activities::activity_type.eq("Follow"))
+        .select(activities::id)
+        .first::<String>(connection)
+        .optional()
+        .ok()
+        .flatten()
+        .is_some()
 }
 
 fn set_following_accepted(
@@ -462,8 +496,11 @@ fn local_recipient(
         }
     }
 
-    let _ = remote_actor;
-    None
+    // Shared inboxes are per instance, so an activity sent here is for this
+    // instance even when the recipients are not explicit. This also makes
+    // Undo activities (which point at a Follow object instead of the actor)
+    // resolve correctly.
+    local_users.into_iter().next()
 }
 
 fn local_post_author(object_url: &str) -> Option<User> {
