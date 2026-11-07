@@ -1,0 +1,62 @@
+# Example reverse proxy for serving the SPA and ActivityPub on the same domain.
+#
+# The goal is to keep @caio@moang.com.br working: WebFinger, the actor, the
+# outbox/inbox and NodeInfo must all answer on https://moang.com.br.
+#
+# Adjust `root` and `proxy_pass` to your container names/ports.
+
+server {
+    listen 443 ssl;
+    server_name moang.com.br;
+
+    ssl_certificate     /etc/letsencrypt/live/moang.com.br/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/moang.com.br/privkey.pem;
+
+    root /var/www/moang;
+    index index.html;
+
+    # ActivityPub discovery
+    location = /.well-known/webfinger {
+        proxy_pass http://127.0.0.1:5000;
+        include /etc/nginx/proxy_params;
+    }
+
+    location = /.well-known/nodeinfo {
+        proxy_pass http://127.0.0.1:5000;
+        include /etc/nginx/proxy_params;
+    }
+
+    location ^~ /nodeinfo/ {
+        proxy_pass http://127.0.0.1:5000;
+        include /etc/nginx/proxy_params;
+    }
+
+    # Actor, inbox, outbox, followers/following, objects, replies and timeline
+    location ^~ /users/ {
+        proxy_pass http://127.0.0.1:5000;
+        include /etc/nginx/proxy_params;
+    }
+
+    # Shared inbox
+    location = /inbox {
+        proxy_pass http://127.0.0.1:5000;
+        include /etc/nginx/proxy_params;
+    }
+
+    # Admin/login routes still live at the backend root
+    location = /login {
+        proxy_pass http://127.0.0.1:5000;
+        include /etc/nginx/proxy_params;
+    }
+
+    # Legacy post admin routes: PUT /{id}/make_public and DELETE /{id}
+    location ~ ^/[0-9]+(/make_public)?$ {
+        proxy_pass http://127.0.0.1:5000;
+        include /etc/nginx/proxy_params;
+    }
+
+    # React SPA fallback
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+}

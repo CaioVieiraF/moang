@@ -11,6 +11,11 @@ async fn main() -> std::io::Result<()> {
     dotenv().ok();
     env_logger::init_from_env(Env::default().default_filter_or("info"));
 
+    blog::run_migrations();
+    if blog::config::AppConfig::get().worker_enabled() {
+        blog::routes::activity_pub::delivery::spawn_worker();
+    }
+
     let cookie_key = Key::from(
         env::var("ACTIX_COOKIE_KEY")
             .expect("ACTIX_COOKIE_KEY must be set!")
@@ -30,7 +35,7 @@ async fn main() -> std::io::Result<()> {
             .allowed_origin_fn(|origin, _req_header| {
                 origin.as_bytes().starts_with(b"http://localhost:")
             })
-            .allowed_methods(vec!["GET", "POST"])
+            .allowed_methods(vec!["GET", "POST", "PUT", "DELETE"])
             .supports_credentials()
             .allowed_headers(vec![http::header::AUTHORIZATION, http::header::ACCEPT])
             .allowed_header(http::header::CONTENT_TYPE)

@@ -1,0 +1,8 @@
+CREATE TABLE posts (
+    id SERIAL PRIMARY KEY,
+    title VARCHAR NOT NULL,
+    body TEXT NOT NULL,
+    is_public BOOLEAN NOT NULL DEFAULT TRUE,
+    slug VARCHAR NOT NULL UNIQUE,
+    author VARCHAR (36) REFERENCES users(id) NOT NULL
+)
