@@ -2,12 +2,14 @@ use actix_web::{get, web::Json, web::Path, HttpResponse};
 use chrono::{DateTime, Utc};
 use diesel::prelude::*;
 use serde::Serialize;
+use uuid::Uuid;
 
 use crate::{
+    config::AppConfig,
     establish_connection,
-    models::{RemoteActor, RemotePost},
+    models::{RemoteActor, RemotePost, User},
     routes::users::has_user,
-    schema::{remote_actors, remote_posts},
+    schema::{following, posts, remote_actors, remote_posts},
 };
 
 #[derive(Serialize)]
@@ -73,13 +75,27 @@ pub struct Timeline {
 #[get("/timeline")]
 pub async fn get_timeline(path: Path<String>) -> HttpResponse {
     let username = path.into_inner().to_lowercase();
-    if has_user(username).is_none() {
+    let Some(user) = has_user(username.clone()) else {
         return HttpResponse::NotFound().finish();
-    }
+    };
 
     let connection = &mut establish_connection();
+    let followed = match followed_actors(&user, connection) {
+        Ok(followed) => followed,
+        Err(error) => return HttpResponse::InternalServerError().body(error.to_string()),
+    };
+    let local_objects = match local_object_urls(&user, &username, connection) {
+        Ok(objects) => objects,
+        Err(error) => return HttpResponse::InternalServerError().body(error.to_string()),
+    };
+
     let rows = remote_posts::table
         .inner_join(remote_actors::table)
+        .filter(
+            remote_posts::actor_id
+                .eq_any(&followed)
+                .or(remote_posts::in_reply_to.eq_any(&local_objects)),
+        )
         .order(remote_posts::published.desc())
         .limit(100)
         .select((RemotePost::as_select(), RemoteActor::as_select()))
@@ -99,4 +115,32 @@ pub async fn get_timeline(path: Path<String>) -> HttpResponse {
         }
         Err(error) => HttpResponse::InternalServerError().body(error.to_string()),
     }
+}
+
+fn followed_actors(
+    user: &User,
+    connection: &mut diesel::PgConnection,
+) -> Result<Vec<String>, diesel::result::Error> {
+    following::table
+        .filter(following::user_id.eq(&user.id))
+        .filter(following::accepted.eq(true))
+        .select(following::actor_id)
+        .load::<String>(connection)
+}
+
+fn local_object_urls(
+    user: &User,
+    username: &str,
+    connection: &mut diesel::PgConnection,
+) -> Result<Vec<String>, diesel::result::Error> {
+    let config = AppConfig::get();
+    let ids = posts::table
+        .filter(posts::author.eq(&user.id))
+        .select(posts::ap_id)
+        .load::<Uuid>(connection)?;
+
+    Ok(ids
+        .iter()
+        .map(|ap_id| config.object_url(username, ap_id))
+        .collect())
 }
