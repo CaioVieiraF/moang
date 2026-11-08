@@ -7,6 +7,7 @@ mod inbox;
 pub mod outbox;
 mod posts;
 mod timeline;
+mod update_profile;
 mod user_router;
 
 use actix_web::{web, Scope};

@@ -16,6 +16,7 @@ pub struct User {
     pub display_name: String,
     pub summary: String,
     pub avatar_url: String,
+    pub header_url: String,
     pub created_at: SystemTime,
     pub is_locked: bool,
     pub is_discoverable: bool,
