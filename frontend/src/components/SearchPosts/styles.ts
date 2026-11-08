@@ -16,7 +16,7 @@ export const SearchInput = styled.input`
   backdrop-filter: blur(45px);
   box-shadow: 0 0 25px rgba(0, 0, 0, 0.1), inset 0 0 10px 6px ${p => p.theme['secondary-950']}30;
   color: ${props => props.theme['text']};
-  padding: 1rem;
+  padding: 1rem 8.5rem 1rem 1rem;
 
   &::placeholder {
     color: ${props => props.theme['secondary-700']};
@@ -28,6 +28,10 @@ export const SearchInput = styled.input`
 
   &:focus {
     box-shadow: 0 0 25px rgba(0, 0, 0, 0.3), inset 0 0 10px 4px ${p => p.theme['secondary-950']}30;
+  }
+
+  @media (max-width: 600px) {
+    padding-right: 4rem;
   }
 `
 
@@ -60,5 +64,13 @@ export const SearchButton = styled.button`
     color: ${props => props.theme['accent-200']};
     box-shadow: 0 0 8px 2px ${props => props.theme['secondary-950']};
     transition: background-color 0.2s, box-shadow 0.1s;
+  }
+
+  @media (max-width: 600px) {
+    .label {
+      display: none;
+    }
+
+    padding: 0.6rem;
   }
 `

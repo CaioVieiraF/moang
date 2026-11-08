@@ -1,15 +1,13 @@
 use crate::{
-    establish_connection,
-    models::{Claims, NewPost, Post},
+    current_user, establish_connection,
+    models::{NewPost, Post},
     user_is_loged_in,
 };
 use actix_session::Session;
-use actix_web::{post, web::Json, HttpResponse};
+use actix_web::{post, web::Json, web::Path, HttpResponse};
 use diesel::prelude::*;
-use jsonwebtoken::{DecodingKey, Validation};
 use serde::Deserialize;
 use slug::slugify;
-use std::env;
 use tokio::fs::{read_to_string, write};
 
 #[derive(Deserialize)]
@@ -22,34 +20,24 @@ struct NewPostRequest {
 }
 
 #[post("")]
-pub async fn create_post(session: Session, new_post_request: Json<NewPostRequest>) -> HttpResponse {
+pub async fn create_post(
+    session: Session,
+    path: Path<String>,
+    new_post_request: Json<NewPostRequest>,
+) -> HttpResponse {
     use crate::schema::posts;
-    use crate::schema::users::dsl::*;
 
     if !user_is_loged_in(&session) {
         return HttpResponse::Unauthorized().finish();
     }
 
-    let token = session.get::<String>("user_identity").unwrap().unwrap();
+    let Some(user) = current_user(&session) else {
+        return HttpResponse::Unauthorized().finish();
+    };
 
-    let token_secret = env::var("JWT_HASH").expect("JWT_HASH not set!");
-    let user_email = jsonwebtoken::decode::<Claims>(
-        token.trim_start_matches("Bearer "),
-        &DecodingKey::from_secret(token_secret.as_ref()),
-        &Validation::default(),
-    )
-    .unwrap()
-    .claims
-    .sub;
-
-    let connection = &mut establish_connection();
-    let user_id_query = users
-        .filter(email.eq(user_email))
-        .select(id)
-        .first::<String>(connection);
-
-    if user_id_query.is_err() {
-        return HttpResponse::NotFound().body("User not found");
+    // A C2S Create must be posted to the outbox of its own actor.
+    if user.name != path.into_inner().to_lowercase() {
+        return HttpResponse::Forbidden().finish();
     }
 
     let new_post_request = new_post_request.into_inner();
@@ -75,26 +63,31 @@ pub async fn create_post(session: Session, new_post_request: Json<NewPostRequest
         body: new_post_request.body,
         is_public: visibility == "public" || visibility == "unlisted",
         slug: slugify(new_post_request.title),
-        author: user_id_query.unwrap(),
+        author: user.id,
         visibility: visibility.to_string(),
         kind: kind.to_string(),
     };
-    let query_result = diesel::insert_into(posts::table)
+
+    let connection = &mut establish_connection();
+    let post = match diesel::insert_into(posts::table)
         .values(&new_post)
         .returning(Post::as_returning())
-        .get_result::<Post>(connection);
+        .get_result::<Post>(connection)
+    {
+        Ok(post) => post,
+        Err(error) => {
+            log::error!("error creating post: {error}");
+            return HttpResponse::InternalServerError().body("Error creating post on DB");
+        }
+    };
 
-    if query_result.is_err() {
-        return HttpResponse::InternalServerError().body("Error creating post on DB");
+    // The Gemini mirror is optional. A missing `content/index.gmi` or a
+    // filesystem problem must never prevent the post from being federated.
+    if let Err(error) = create_gemini_post(&new_post).await {
+        log::warn!("could not write gemini mirror for {}: {error}", post.slug);
     }
 
-    let gemini_post = create_gemini_post(&new_post).await;
-    if gemini_post.is_err() {
-        return HttpResponse::InternalServerError().body("Error creating gemini post");
-    }
-
-    let post = query_result.unwrap();
-    crate::routes::users::outbox::publish::publish_post(&post, &new_post.author);
+    crate::routes::users::outbox::publish::publish_post(&post, &post.author);
 
     HttpResponse::Created().finish()
 }
@@ -105,8 +98,12 @@ async fn create_gemini_post(post: &NewPost) -> tokio::io::Result<()> {
     gemini_content.push_str("\n\n=> /index.gmi HOME");
     write(format!("content/{}.gmi", &post.slug), gemini_content).await?;
 
-    let mut gemini_index_content = read_to_string("content/index.gmi").await?;
-    gemini_index_content.push_str(format!("\n=> /{}.gmi {}", &post.slug, &post.title).as_str());
+    let mut gemini_index_content = match read_to_string("content/index.gmi").await {
+        Ok(content) => content,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => "# Moang\n".to_string(),
+        Err(error) => return Err(error),
+    };
+    gemini_index_content.push_str(&format!("\n=> /{}.gmi {}", &post.slug, &post.title));
     write("content/index.gmi", gemini_index_content).await?;
 
     Ok(())

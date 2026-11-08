@@ -241,7 +241,7 @@ fn handle_undo(
 
     // Undoing a Like or Announce points at the original activity, so removing
     // the interaction by its id is enough.
-    let Some(object_id) = payload.get("object").and_then(id_of) else {
+    let Some(object_id) = undo_target_id(payload) else {
         return Ok(());
     };
 
@@ -262,11 +262,7 @@ fn handle_reaction(
     remote_actor: &RemoteActor,
     interaction_type: &str,
 ) -> Result<(), String> {
-    let Some(object_id) = payload.get("object").and_then(id_of) else {
-        return Ok(());
-    };
-    let object_id = object_id.trim_end_matches('/').to_string();
-    let Some(activity_id) = id_of(payload) else {
+    let Some((activity_id, object_id)) = reaction_ids(payload) else {
         return Ok(());
     };
 
@@ -381,7 +377,7 @@ fn handle_create(payload: &Value, remote_actor: &RemoteActor) -> Result<(), Stri
         return Ok(());
     }
 
-    save_remote_post(object, remote_actor)
+    save_remote_post(object, payload, remote_actor)
 }
 
 fn handle_update(
@@ -399,7 +395,7 @@ fn handle_update(
         return Ok(());
     }
 
-    save_remote_post(object, remote_actor)
+    save_remote_post(object, payload, remote_actor)
 }
 
 fn handle_delete(payload: &Value, remote_actor: &RemoteActor) -> Result<(), String> {
@@ -426,14 +422,26 @@ fn handle_delete(payload: &Value, remote_actor: &RemoteActor) -> Result<(), Stri
     Ok(())
 }
 
-fn save_remote_post(object: &Value, remote_actor: &RemoteActor) -> Result<(), String> {
+fn save_remote_post(
+    object: &Value,
+    activity: &Value,
+    remote_actor: &RemoteActor,
+) -> Result<(), String> {
     let Some(id) = id_of(object) else {
         return Ok(());
     };
 
+    // Some servers only put HTML in `contentMap`, and some only put the
+    // audience on the wrapping activity instead of on the object.
     let raw_content = object
         .get("content")
         .and_then(Value::as_str)
+        .or_else(|| {
+            object
+                .get("contentMap")
+                .and_then(Value::as_object)
+                .and_then(|map| map.values().find_map(Value::as_str))
+        })
         .unwrap_or_default();
     let content = ammonia::clean(raw_content);
     let summary = object
@@ -451,10 +459,14 @@ fn save_remote_post(object: &Value, remote_actor: &RemoteActor) -> Result<(), St
         .and_then(parse_time);
     let url = object
         .get("url")
-        .and_then(Value::as_str)
-        .map(str::to_string)
-        .or_else(|| Some(id.clone()));
-    let in_reply_to = object.get("inReplyTo").and_then(id_of);
+        .and_then(first_url)
+        .unwrap_or_else(|| id.clone());
+    // Servers disagree on the trailing slash; normalize it so replies always
+    // match the canonical object id used by our own posts.
+    let in_reply_to = object
+        .get("inReplyTo")
+        .and_then(id_of)
+        .map(|value| value.trim_end_matches('/').to_string());
     let sensitive = object
         .get("sensitive")
         .and_then(Value::as_bool)
@@ -462,6 +474,28 @@ fn save_remote_post(object: &Value, remote_actor: &RemoteActor) -> Result<(), St
     let likes_count = collection_total(object.get("likes"));
     let reposts_count = collection_total(object.get("shares"));
     let replies_count = collection_total(object.get("replies"));
+    let to_addresses = json!(ids_of(
+        object.get("to").or_else(|| activity.get("to"))
+    ));
+    let cc_addresses = json!(ids_of(
+        object.get("cc").or_else(|| activity.get("cc"))
+    ));
+
+    let connection = &mut establish_connection();
+
+    // Updates may omit the interaction collections. Keep the previous counts
+    // instead of resetting them to zero.
+    let previous_counts = remote_posts::table
+        .find(&id)
+        .select((
+            remote_posts::likes_count,
+            remote_posts::reposts_count,
+            remote_posts::replies_count,
+        ))
+        .first::<(i32, i32, i32)>(connection)
+        .optional()
+        .map_err(|error| error.to_string())?
+        .unwrap_or((0, 0, 0));
 
     let remote_post = RemotePost {
         id: id.clone(),
@@ -470,16 +504,17 @@ fn save_remote_post(object: &Value, remote_actor: &RemoteActor) -> Result<(), St
         summary,
         published,
         updated_at,
-        url,
+        url: Some(url),
         in_reply_to,
         sensitive,
         created_at: SystemTime::now(),
-        likes_count,
-        reposts_count,
-        replies_count,
+        likes_count: likes_count.unwrap_or(previous_counts.0),
+        reposts_count: reposts_count.unwrap_or(previous_counts.1),
+        replies_count: replies_count.unwrap_or(previous_counts.2),
+        to_addresses,
+        cc_addresses,
     };
 
-    let connection = &mut establish_connection();
     let updated_rows = diesel::update(remote_posts::table.find(&id))
         .set((
             remote_posts::content.eq(&remote_post.content),
@@ -487,10 +522,12 @@ fn save_remote_post(object: &Value, remote_actor: &RemoteActor) -> Result<(), St
             remote_posts::updated_at.eq(remote_post.updated_at),
             remote_posts::url.eq(&remote_post.url),
             remote_posts::in_reply_to.eq(&remote_post.in_reply_to),
-            remote_posts::sensitive.eq(remote_post.sensitive),
+            remote_posts::sensitive.eq(&remote_post.sensitive),
             remote_posts::likes_count.eq(remote_post.likes_count),
             remote_posts::reposts_count.eq(remote_post.reposts_count),
             remote_posts::replies_count.eq(remote_post.replies_count),
+            remote_posts::to_addresses.eq(&remote_post.to_addresses),
+            remote_posts::cc_addresses.eq(&remote_post.cc_addresses),
         ))
         .execute(connection)
         .map_err(|error| error.to_string())?;
@@ -603,12 +640,34 @@ fn ids_of(value: Option<&Value>) -> Vec<String> {
     id_of(value).into_iter().collect()
 }
 
-fn collection_total(value: Option<&Value>) -> i32 {
+/// `url` can be a string, an object with `href`, or an array of either.
+fn first_url(value: &Value) -> Option<String> {
+    if let Some(text) = value.as_str() {
+        return Some(text.to_string());
+    }
+    if let Some(href) = value.get("href").and_then(Value::as_str) {
+        return Some(href.to_string());
+    }
+
+    value.as_array()?.iter().find_map(first_url)
+}
+
+fn collection_total(value: Option<&Value>) -> Option<i32> {
     value
         .and_then(|value| value.get("totalItems"))
         .and_then(Value::as_i64)
-        .unwrap_or(0)
-        .clamp(0, i32::MAX as i64) as i32
+        .map(|total| total.clamp(0, i32::MAX as i64) as i32)
+}
+
+fn reaction_ids(payload: &Value) -> Option<(String, String)> {
+    let activity_id = id_of(payload)?;
+    let object_id = payload.get("object").and_then(id_of)?;
+
+    Some((activity_id, object_id.trim_end_matches('/').to_string()))
+}
+
+fn undo_target_id(payload: &Value) -> Option<String> {
+    payload.get("object").and_then(id_of)
 }
 
 fn parse_time(value: &str) -> Option<SystemTime> {
@@ -618,23 +677,138 @@ fn parse_time(value: &str) -> Option<SystemTime> {
 
 #[cfg(test)]
 mod tests {
-    use super::collection_total;
+    use super::{collection_total, first_url, id_of, ids_of, parse_time, reaction_ids, undo_target_id};
     use serde_json::json;
 
     #[test]
     fn reads_collection_totals() {
         let value = json!({ "type": "Collection", "totalItems": 42 });
 
-        assert_eq!(collection_total(Some(&value)), 42);
+        assert_eq!(collection_total(Some(&value)), Some(42));
+        assert_eq!(
+            collection_total(Some(&json!({ "totalItems": i64::MAX }))),
+            Some(i32::MAX)
+        );
     }
 
     #[test]
-    fn missing_or_invalid_collection_counts_as_zero() {
-        assert_eq!(collection_total(None), 0);
+    fn missing_or_invalid_collection_counts_are_none() {
+        assert_eq!(collection_total(None), None);
         assert_eq!(
             collection_total(Some(&json!("https://example.com/likes"))),
-            0
+            None
         );
-        assert_eq!(collection_total(Some(&json!({ "totalItems": -3 }))), 0);
+        assert_eq!(
+            collection_total(Some(&json!({ "totalItems": -3 }))),
+            Some(0)
+        );
+    }
+
+    #[test]
+    fn like_and_announce_targets_are_normalized() {
+        let payload = json!({
+            "id": "https://mastodon.social/users/ana#likes/1",
+            "type": "Like",
+            "object": "https://moang.com.br/users/caio/posts/abc/"
+        });
+
+        assert_eq!(
+            reaction_ids(&payload),
+            Some((
+                "https://mastodon.social/users/ana#likes/1".to_string(),
+                "https://moang.com.br/users/caio/posts/abc".to_string()
+            ))
+        );
+    }
+
+    #[test]
+    fn reactions_can_embed_the_target_object() {
+        let payload = json!({
+            "id": "https://example.com/activities/announce/1",
+            "type": "Announce",
+            "object": { "id": "https://moang.com.br/users/caio/posts/abc" }
+        });
+
+        assert_eq!(
+            reaction_ids(&payload),
+            Some((
+                "https://example.com/activities/announce/1".to_string(),
+                "https://moang.com.br/users/caio/posts/abc".to_string()
+            ))
+        );
+    }
+
+    #[test]
+    fn undo_targets_can_be_embedded_or_referenced_by_id() {
+        assert_eq!(
+            undo_target_id(&json!({ "object": "https://example.com/likes/1" })),
+            Some("https://example.com/likes/1".to_string())
+        );
+        assert_eq!(
+            undo_target_id(&json!({
+                "object": { "id": "https://example.com/likes/2", "type": "Like" }
+            })),
+            Some("https://example.com/likes/2".to_string())
+        );
+        assert_eq!(undo_target_id(&json!({ "type": "Undo" })), None);
+    }
+
+    #[test]
+    fn audience_accepts_arrays_strings_and_embedded_objects() {
+        assert_eq!(
+            ids_of(Some(&json!([
+                "https://www.w3.org/ns/activitystreams#Public",
+                { "id": "https://example.com/users/ana" },
+                42
+            ]))),
+            vec![
+                "https://www.w3.org/ns/activitystreams#Public".to_string(),
+                "https://example.com/users/ana".to_string()
+            ]
+        );
+        assert_eq!(
+            ids_of(Some(&json!("https://example.com/users/ana"))),
+            vec!["https://example.com/users/ana".to_string()]
+        );
+        assert!(ids_of(None).is_empty());
+    }
+
+    #[test]
+    fn ids_are_read_from_strings_or_objects() {
+        assert_eq!(
+            id_of(&json!("https://example.com/notes/1")),
+            Some("https://example.com/notes/1".to_string())
+        );
+        assert_eq!(
+            id_of(&json!({ "id": "https://example.com/notes/2" })),
+            Some("https://example.com/notes/2".to_string())
+        );
+        assert_eq!(id_of(&json!({ "type": "Note" })), None);
+    }
+
+    #[test]
+    fn only_rfc3339_timestamps_are_accepted() {
+        assert!(parse_time("2026-11-08T01:02:03Z").is_some());
+        assert!(parse_time("08/11/2026").is_none());
+    }
+
+    #[test]
+    fn urls_accept_strings_objects_and_arrays() {
+        assert_eq!(
+            first_url(&json!("https://example.com/1")),
+            Some("https://example.com/1".to_string())
+        );
+        assert_eq!(
+            first_url(&json!({ "href": "https://example.com/2", "type": "Link" })),
+            Some("https://example.com/2".to_string())
+        );
+        assert_eq!(
+            first_url(&json!([
+                { "href": "https://example.com/3" },
+                "https://example.com/4"
+            ])),
+            Some("https://example.com/3".to_string())
+        );
+        assert_eq!(first_url(&json!(42)), None);
     }
 }

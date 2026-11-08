@@ -83,28 +83,56 @@ fn try_publish_update(post: &Post, author_id: &str) -> Result<(), String> {
 }
 
 fn try_publish_delete(post: &Post, author_id: &str) -> Result<(), String> {
+    // Private posts were never delivered, so there is nothing to undo remotely.
+    if post.visibility == "private" {
+        return Ok(());
+    }
+
+    let config = AppConfig::get();
     let user = local_user(author_id)?;
-    let object_id = crate::config::AppConfig::get().object_url(&user.name, &post.ap_id);
+    let object_id = config.object_url(&user.name, &post.ap_id);
     let (activity_id, _) = new_activity_id(&user.name);
     let deleted: DateTime<Utc> = Utc::now();
+    let former_type = if post.kind == "microblog" {
+        ObjType::Note
+    } else {
+        ObjType::Article
+    };
+    let (to, cc) = delete_audience(&post.visibility, &config.followers_url(&user.name))?;
 
     let payload = json!({
         "@context": Context::activity_streams(),
         "id": activity_id,
         "type": ObjType::Delete,
-        "actor": Url::try_from(crate::config::AppConfig::get().actor_url(&user.name))?,
+        "actor": Url::try_from(config.actor_url(&user.name))?,
         "published": format!("{}", deleted.format("%+")),
-        "to": [Url::try_from(PUBLIC_COLLECTION)?],
+        "to": to,
+        "cc": cc,
         "object": {
             "id": object_id,
             "type": ObjType::Tombstone,
-            "formerType": ObjType::Article,
+            "formerType": former_type,
             "deleted": format!("{}", deleted.format("%+"))
         }
     });
 
     save_and_enqueue(&payload, author_id, &user.name)?;
     Ok(())
+}
+
+/// A Delete must reach the same audience as the object it removes.
+fn delete_audience(
+    visibility: &str,
+    followers_url: &str,
+) -> Result<(Vec<Url>, Vec<Url>), String> {
+    let public = Url::try_from(PUBLIC_COLLECTION)?;
+    let followers = Url::try_from(followers_url)?;
+
+    Ok(match visibility {
+        "public" | "unlisted" => (vec![public], vec![followers]),
+        "followers" => (vec![followers], Vec::new()),
+        _ => (vec![public], Vec::new()),
+    })
 }
 
 fn try_publish_actor_update(user: &User) -> Result<(), String> {
@@ -161,6 +189,27 @@ fn save_and_enqueue(
 
     log::info!("queued {activity_type} for @{username}");
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::delete_audience;
+    use crate::routes::activity_pub::PUBLIC_COLLECTION;
+
+    #[test]
+    fn delete_is_addressed_to_the_same_audience_as_the_post() {
+        let (to, cc) = delete_audience("public", "https://example.com/users/ana/followers")
+            .unwrap();
+
+        assert_eq!(to[0].as_str(), PUBLIC_COLLECTION);
+        assert_eq!(cc[0].as_str(), "https://example.com/users/ana/followers");
+
+        let (to, cc) = delete_audience("followers", "https://example.com/users/ana/followers")
+            .unwrap();
+
+        assert_eq!(to[0].as_str(), "https://example.com/users/ana/followers");
+        assert!(cc.is_empty());
+    }
 }
 
 fn local_user(author_id: &str) -> Result<User, String> {

@@ -1,7 +1,7 @@
 use std::time::SystemTime;
 
 use crate::{
-    establish_connection,
+    current_user_id, establish_connection,
     models::Post,
     routes::users::outbox::publish::{publish_post, publish_update},
     user_is_loged_in,
@@ -30,6 +30,13 @@ pub async fn make_public(session: Session, path: Path<i32>) -> HttpResponse {
         Ok(None) => return HttpResponse::NotFound().finish(),
         Err(error) => return HttpResponse::InternalServerError().body(error.to_string()),
     };
+
+    let Some(user_id) = current_user_id(&session) else {
+        return HttpResponse::Unauthorized().finish();
+    };
+    if previous.author != user_id {
+        return HttpResponse::Forbidden().finish();
+    }
 
     let query_result = diesel::update(posts.find(post_id))
         .set((

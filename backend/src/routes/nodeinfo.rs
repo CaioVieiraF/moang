@@ -34,7 +34,9 @@ pub async fn nodeinfo() -> HttpResponse {
         .unwrap_or(0);
 
     HttpResponse::Ok()
-        .content_type("application/json")
+        .content_type(
+            "application/json; profile=\"http://nodeinfo.diaspora.software/ns/schema/2.1~\"",
+        )
         .json(Json(json!({
             "version": "2.1",
             "software": {

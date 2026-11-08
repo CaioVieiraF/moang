@@ -10,6 +10,7 @@ pub mod delivery;
 pub mod fetch;
 pub mod inbox;
 pub mod keys;
+pub mod remote_note;
 pub mod signature;
 
 pub const ACTIVITY_STREAMS_CONTEXT: &str = "https://www.w3.org/ns/activitystreams";

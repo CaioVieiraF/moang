@@ -112,6 +112,8 @@ diesel::table! {
         likes_count -> Int4,
         reposts_count -> Int4,
         replies_count -> Int4,
+        to_addresses -> Jsonb,
+        cc_addresses -> Jsonb,
     }
 }
 

@@ -11,7 +11,7 @@ use diesel::prelude::*;
 use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
 use dotenv::dotenv;
 use jsonwebtoken::{DecodingKey, Validation};
-use models::Claims;
+use models::{Claims, User};
 
 pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations");
 
@@ -48,4 +48,41 @@ fn user_is_loged_in(session: &Session) -> bool {
     } else {
         false
     }
+}
+
+/// Email stored in the session token. Used by actions that need to know
+/// *which* user is logged in, not only that somebody is.
+pub fn current_user_email(session: &Session) -> Option<String> {
+    let token = session.get::<String>("user_identity").ok()??;
+    let secret = env::var("JWT_HASH").ok()?;
+    let claims = jsonwebtoken::decode::<Claims>(
+        token.trim_start_matches("Bearer "),
+        &DecodingKey::from_secret(secret.as_ref()),
+        &Validation::default(),
+    )
+    .ok()?
+    .claims;
+
+    Some(claims.sub)
+}
+
+/// Full record of the logged-in user. Ownership checks must use this instead
+/// of trusting the URL, and the outbox must belong to this same actor.
+pub fn current_user(session: &Session) -> Option<User> {
+    use crate::schema::users;
+
+    let email = current_user_email(session)?;
+    let connection = &mut establish_connection();
+
+    users::table
+        .filter(users::email.eq(&email))
+        .select(User::as_select())
+        .first::<User>(connection)
+        .ok()
+}
+
+/// Id of the logged-in user, ready to be compared with `posts.author` or
+/// `users.id`.
+pub fn current_user_id(session: &Session) -> Option<String> {
+    current_user(session).map(|user| user.id)
 }
