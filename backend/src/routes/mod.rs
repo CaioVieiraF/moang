@@ -13,6 +13,8 @@ use actix_web::{
 pub fn router() -> Scope {
     web::scope("")
         .service(webfinger::webfinger)
+        .service(webfinger::host_meta)
+        .service(webfinger::host_meta_json)
         .service(nodeinfo::nodeinfo_discovery)
         .service(nodeinfo::nodeinfo)
         .service(login::login)
