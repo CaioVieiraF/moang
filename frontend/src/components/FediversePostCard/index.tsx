@@ -50,7 +50,9 @@ const dateFormatter = new Intl.DateTimeFormat('pt-BR', {
 
 function formatDate(value: string) {
   const date = new Date(value)
-  return Number.isNaN(date.getTime()) ? '' : dateFormatter.format(date)
+  return Number.isNaN(date.getTime())
+    ? ''
+    : dateFormatter.format(date)
 }
 
 function initials(name: string, username: string) {
@@ -76,7 +78,7 @@ export function FediversePostCard({ post }: FediversePostCardProps) {
   return (
     <CardContainer>
       <CardHeader>
-        {showAvatar ? (
+        {showAvatar && (
           <CardAvatar
             src={actor.avatarUrl}
             alt=""
@@ -84,7 +86,9 @@ export function FediversePostCard({ post }: FediversePostCardProps) {
             referrerPolicy="no-referrer"
             onError={() => setAvatarFailed(true)}
           />
-        ) : (
+        )}
+
+        {!showAvatar && (
           <CardAvatarFallback aria-hidden="true">
             {initials(actor.name, actor.username)}
           </CardAvatarFallback>

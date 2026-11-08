@@ -5,7 +5,7 @@ import { api } from '../../lib/axios'
 import { userEndpoint } from '../../lib/blog'
 import { FediversePost, FediversePostCard } from '../../components/FediversePostCard'
 
-interface Timeline {
+interface TimelineData {
   totalItems: number
   orderedItems: FediversePost[]
 }
@@ -13,7 +13,7 @@ interface Timeline {
 type LoadState = 'loading' | 'ready' | 'error'
 
 export function Timeline() {
-  const [timeline, setTimeline] = useState<Timeline>({
+  const [timeline, setTimeline] = useState<TimelineData>({
     totalItems: 0,
     orderedItems: [],
   })
@@ -34,6 +34,9 @@ export function Timeline() {
     load()
   }, [load])
 
+  const isEmpty = state === 'ready' && timeline.orderedItems.length === 0
+  const hasPosts = state === 'ready' && timeline.orderedItems.length > 0
+
   return (
     <PostsContainer>
       <Title>
@@ -50,16 +53,14 @@ export function Timeline() {
         </TimelineEmpty>
       )}
 
-      {state === 'ready' && (
-        timeline.orderedItems.length === 0 ? (
-          <TimelineEmpty>Nenhum post remoto recebido ainda.</TimelineEmpty>
-        ) : (
-          <TimelineList>
-            {timeline.orderedItems.map(post => (
-              <FediversePostCard key={post.id} post={post} />
-            ))}
-          </TimelineList>
-        )
+      {isEmpty && <TimelineEmpty>Nenhum post remoto recebido ainda.</TimelineEmpty>}
+
+      {hasPosts && (
+        <TimelineList>
+          {timeline.orderedItems.map(post => (
+            <FediversePostCard key={post.id} post={post} />
+          ))}
+        </TimelineList>
       )}
     </PostsContainer>
   )

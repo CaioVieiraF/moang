@@ -76,7 +76,9 @@ export function Post() {
   }, [getPost])
 
   useEffect(() => {
-    document.title = post.name ? `Moang blog - ${post.name}` : 'Moang blog'
+    document.title = post.name
+      ? `Moang blog - ${post.name}`
+      : 'Moang blog'
   }, [post.name])
 
   useEffect(() => {
@@ -117,7 +119,9 @@ export function Post() {
     hour12: false,
   })
   const formatedDate = date.format(new Date(post.published))
-  const kind = post.object.type === 'Note' ? 'Microblog' : 'Artigo'
+  const kind = post.object.type === 'Note'
+    ? 'Microblog'
+    : 'Artigo'
   const visibility = visibilityLabel(post.object.to, post.object.cc)
   const content = post.object.source?.content ?? post.object.content
   const minutes = readingTime(content)
@@ -125,6 +129,9 @@ export function Post() {
   const likes = post.object.likes?.totalItems ?? 0
   const reposts = post.object.shares?.totalItems ?? 0
   const replyCount = replies.totalItems || post.object.replies?.totalItems || 0
+  const repliesLabel = replies.totalItems === 1
+    ? 'resposta'
+    : 'respostas'
 
   return (
     <PostContainer>
@@ -180,9 +187,7 @@ export function Post() {
         <PostReplies>
           <PostRepliesHeader>
             <h2>Respostas</h2>
-            <small>
-              {replies.totalItems} {replies.totalItems === 1 ? 'resposta' : 'respostas'}
-            </small>
+            <small>{replies.totalItems} {repliesLabel}</small>
           </PostRepliesHeader>
           <PostRepliesList>
             {replies.orderedItems.map(reply => (

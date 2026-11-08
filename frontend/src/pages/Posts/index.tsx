@@ -85,6 +85,9 @@ export function Posts() {
     })
   }, [posts.orderedItems, query])
 
+  const isEmpty = state === 'ready' && filtered.length === 0
+  const hasPosts = state === 'ready' && filtered.length > 0
+
   // The backend orders posts by created_at DESC (newest first), the same
   // order used by the timeline and the RSS feed. No reverse() here.
   return (
@@ -109,34 +112,36 @@ export function Posts() {
         </StateMessage>
       )}
 
-      {state === 'ready' && (
-        filtered.length === 0 ? (
-          <StateMessage>
-            {query.trim()
-              ? 'Nenhuma publicação encontrada para esta busca.'
-              : 'Nenhuma publicação ainda.'}
-          </StateMessage>
-        ) : (
-          <PostsList>
-            {filtered.map(post => {
-              const postId = Number(post.id.split('/').pop())
-              const kind = post.object.type === 'Note' ? 'Microblog' : 'Artigo'
+      {isEmpty && (
+        <StateMessage>
+          {query.trim()
+            ? 'Nenhuma publicação encontrada para esta busca.'
+            : 'Nenhuma publicação ainda.'}
+        </StateMessage>
+      )}
 
-              return (
-                <LinkToPost
-                  key={post.id}
-                  postID={postId}
-                  title={post.name}
-                  createdAt={post.published}
-                  kind={kind}
-                  likes={post.object.likes?.totalItems ?? 0}
-                  reposts={post.object.shares?.totalItems ?? 0}
-                  replies={post.object.replies?.totalItems ?? 0}
-                />
-              )
-            })}
-          </PostsList>
-        )
+      {hasPosts && (
+        <PostsList>
+          {filtered.map(post => {
+            const postId = Number(post.id.split('/').pop())
+            const kind = post.object.type === 'Note'
+              ? 'Microblog'
+              : 'Artigo'
+
+            return (
+              <LinkToPost
+                key={post.id}
+                postID={postId}
+                title={post.name}
+                createdAt={post.published}
+                kind={kind}
+                likes={post.object.likes?.totalItems ?? 0}
+                reposts={post.object.shares?.totalItems ?? 0}
+                replies={post.object.replies?.totalItems ?? 0}
+              />
+            )
+          })}
+        </PostsList>
       )}
     </PostsContainer>
   )
