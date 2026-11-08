@@ -79,7 +79,7 @@ pub async fn follow(
         return HttpResponse::NotFound().finish();
     };
 
-    let remote_actor = match fetch_remote_actor(&request.actor, false).await {
+    let remote_actor = match fetch_remote_actor(&request.actor, false, Some(&user)).await {
         Ok(actor) => actor,
         Err(error) => return HttpResponse::BadRequest().body(error),
     };
@@ -150,7 +150,7 @@ pub async fn unfollow(
         return HttpResponse::NotFound().finish();
     };
 
-    let remote_actor = match fetch_remote_actor(&request.actor, false).await {
+    let remote_actor = match fetch_remote_actor(&request.actor, false, Some(&user)).await {
         Ok(actor) => actor,
         Err(error) => return HttpResponse::BadRequest().body(error),
     };

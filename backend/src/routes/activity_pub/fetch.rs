@@ -8,7 +8,17 @@ use reqwest::header::ACCEPT;
 use serde_json::Value;
 use url::Url;
 
-use crate::{config::AppConfig, establish_connection, models::RemoteActor, schema::remote_actors};
+use crate::{
+    config::AppConfig,
+    establish_connection,
+    models::{RemoteActor, User},
+    schema::remote_actors,
+};
+
+use super::{
+    keys::get_or_create_key,
+    signature::sign_get_request,
+};
 
 const ACTIVITY_JSON: &str = "application/activity+json";
 const ACTIVITY_LD_JSON: &str =
@@ -18,7 +28,14 @@ const ACTIVITY_LD_JSON: &str =
 ///
 /// `force` is used when a signature points at a key we do not know yet, which is
 /// how key rotation is picked up.
-pub async fn fetch_remote_actor(actor_url: &str, force: bool) -> Result<RemoteActor, String> {
+///
+/// `signer` is the local user used to sign the GET. Instances with authorized
+/// fetch enabled, like mastodon.social, return 401 for unsigned requests.
+pub async fn fetch_remote_actor(
+    actor_url: &str,
+    force: bool,
+    signer: Option<&User>,
+) -> Result<RemoteActor, String> {
     let config = AppConfig::get();
     let url = validate_remote_url(actor_url)?;
 
@@ -40,9 +57,17 @@ pub async fn fetch_remote_actor(actor_url: &str, force: bool) -> Result<RemoteAc
         .build()
         .map_err(|error| error.to_string())?;
 
-    let response = client
+    let mut request = client
         .get(url.clone())
-        .header(ACCEPT, format!("{ACTIVITY_JSON}, {ACTIVITY_LD_JSON}"))
+        .header(ACCEPT, format!("{ACTIVITY_JSON}, {ACTIVITY_LD_JSON}"));
+
+    if let Some(user) = signer {
+        let key = get_or_create_key(&user.id)?;
+        let key_id = config.actor_key_id(&user.name);
+        request = request.headers(sign_get_request(&url, &key, &key_id)?);
+    }
+
+    let response = request
         .send()
         .await
         .map_err(|error| format!("error fetching {actor_url}: {error}"))?;
