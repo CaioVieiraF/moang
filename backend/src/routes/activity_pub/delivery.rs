@@ -10,11 +10,12 @@ use uuid::Uuid;
 use crate::{
     config::AppConfig,
     establish_connection,
-    models::{Activity, Delivery, NewDelivery, User},
-    schema::{activities, deliveries, followers, remote_actors, users},
+    models::{Activity, Delivery, NewDelivery, Post, User},
+    schema::{activities, deliveries, followers, posts, remote_actors, users},
 };
 
 use super::{
+    collection::OrderedItem,
     fetch::validate_remote_url,
     keys::get_or_create_key,
     signature::sign_request,
@@ -100,6 +101,64 @@ pub fn enqueue_activity(activity_id: &str, inboxes: &[String]) -> Result<(), Str
         .map_err(|error| error.to_string())?;
 
     Ok(())
+}
+
+/// Send the user's existing posts to a newly accepted follower.
+///
+/// Mastodon uses the outbox `totalItems` as the profile post count, but it does
+/// not import the outbox itself: only `Create` activities delivered to the
+/// follower become statuses. Without this backfill a new follower sees the
+/// post count and no posts, because everything was written before the follow.
+pub fn backfill_for_follower(user: &User, inbox_url: &str) -> Result<usize, String> {
+    let connection = &mut establish_connection();
+    let existing_posts = posts::table
+        .filter(posts::author.eq(&user.id))
+        .filter(posts::visibility.ne("private"))
+        .order(posts::created_at.asc())
+        .select(Post::as_select())
+        .load::<Post>(connection)
+        .map_err(|error| error.to_string())?;
+
+    let actor = AppConfig::get().actor_url(&user.name);
+    let inbox = [inbox_url.to_string()];
+    let mut queued = 0;
+
+    for post in &existing_posts {
+        let activity = OrderedItem::from_post(post, &user.name)?;
+        let payload = serde_json::to_value(&activity).map_err(|error| error.to_string())?;
+        let activity_id = payload
+            .get("id")
+            .and_then(Value::as_str)
+            .ok_or_else(|| "backfill activity is missing id".to_string())?
+            .to_string();
+        let object_id = payload
+            .get("object")
+            .and_then(|object| object.get("id"))
+            .and_then(Value::as_str)
+            .map(str::to_string);
+
+        save_activity(
+            &activity_id,
+            Some(&user.id),
+            &actor,
+            "Create",
+            object_id.as_deref(),
+            "out",
+            payload.clone(),
+        )?;
+
+        // The stored activity may predate the current post (for example after an
+        // edit), so refresh the payload before delivering it again.
+        diesel::update(activities::table.find(&activity_id))
+            .set(activities::payload.eq(&payload))
+            .execute(connection)
+            .map_err(|error| error.to_string())?;
+
+        enqueue_activity(&activity_id, &inbox)?;
+        queued += 1;
+    }
+
+    Ok(queued)
 }
 
 /// Background worker that delivers queued activities.
