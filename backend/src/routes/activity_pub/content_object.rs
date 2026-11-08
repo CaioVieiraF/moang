@@ -7,7 +7,7 @@ use crate::{
     config::AppConfig,
     establish_connection,
     models::Post,
-    schema::remote_posts,
+    schema::{remote_interactions, remote_posts},
 };
 
 use super::{collection::Collection, Context, ObjType, Url, PUBLIC_COLLECTION};
@@ -47,6 +47,8 @@ pub struct ContentObject {
     in_reply_to: Option<String>,
 
     replies: Collection,
+    likes: Collection,
+    shares: Collection,
 }
 
 #[derive(Deserialize, Serialize)]
@@ -78,10 +80,16 @@ impl ContentObject {
         let obj_type = object_type(&value.kind);
 
         let replies_count = connection_count(&object_url)?;
+        let likes_count = reaction_count(&object_url, "like")?;
+        let shares_count = reaction_count(&object_url, "repost")?;
         let replies = Collection::with_total(
             Url::try_from(format!("{object_url}/replies"))?,
             replies_count,
         );
+        let likes =
+            Collection::with_total(Url::try_from(format!("{object_url}/likes"))?, likes_count);
+        let shares =
+            Collection::with_total(Url::try_from(format!("{object_url}/shares"))?, shares_count);
 
         // Articles federate a short excerpt plus a link to the blog. Microblog
         // posts are `Note`s, so Mastodon renders the whole content inline.
@@ -121,6 +129,8 @@ impl ContentObject {
             tag: Vec::new(),
             in_reply_to: None,
             replies,
+            likes,
+            shares,
         })
     }
 }
@@ -143,6 +153,18 @@ fn connection_count(object_url: &Url) -> Result<i32, String> {
     let connection = &mut establish_connection();
     let count = remote_posts::table
         .filter(remote_posts::in_reply_to.eq(object_url.as_str()))
+        .count()
+        .get_result::<i64>(connection)
+        .map_err(|error| error.to_string())?;
+
+    Ok(count as i32)
+}
+
+fn reaction_count(object_url: &Url, interaction_type: &str) -> Result<i32, String> {
+    let connection = &mut establish_connection();
+    let count = remote_interactions::table
+        .filter(remote_interactions::object_id.eq(object_url.as_str()))
+        .filter(remote_interactions::interaction_type.eq(interaction_type))
         .count()
         .get_result::<i64>(connection)
         .map_err(|error| error.to_string())?;

@@ -37,7 +37,9 @@ objetos para os outros servidores.
     HTML, para o Mastodon renderizar o texto direto no perfil/timeline.
 - Os dois formatos têm:
   - `source.content`: Markdown completo (o frontend usa esse campo);
-  - `url`: URL do post no frontend.
+  - `url`: URL do post no frontend;
+  - `replies`, `likes` e `shares`: coleções com `totalItems` para o Mastodon
+    mostrar as contagens de respostas, curtidas e reposts.
 - Posts públicos e não listados aparecem na coleção pública do outbox.
 - Quando um Follow é aceito, os posts existentes (exceto `private`) são enviados
   ao novo seguidor como atividades `Create`. O Mastodon usa o `totalItems` do
@@ -46,7 +48,9 @@ objetos para os outros servidores.
 - Entregas usam HTTP Signatures (RSA-SHA256) e ficam em uma fila persistente no
   banco; o worker tenta novamente com backoff.
 - O inbox verifica assinatura, `Digest`, deduplica atividades e aceita
-  `Follow`, `Undo`, `Accept`, `Reject`, `Create`, `Update`, `Delete` e `Block`.
+  `Follow`, `Undo`, `Accept`, `Reject`, `Create`, `Update`, `Delete`, `Block`,
+  `Like` e `Announce`. Curtidas e reposts de posts locais são guardados em
+  `remote_interactions`; `Undo` remove a interação correspondente.
 
 ## Endpoints
 
@@ -77,8 +81,10 @@ ferramentas e diretórios a descobrir que o blog fala ActivityPub.
 
 | Método | Caminho | Descrição |
 | --- | --- | --- |
-| GET | `/users/{username}/posts/{uuid}` | Objeto `Article` canônico |
+| GET | `/users/{username}/posts/{uuid}` | Objeto `Article`/`Note` canônico |
 | GET | `/users/{username}/posts/{uuid}/replies` | Respostas remotas ao post |
+| GET | `/users/{username}/posts/{uuid}/likes` | Atores que curtiram o post |
+| GET | `/users/{username}/posts/{uuid}/shares` | Atores que repostaram o post |
 | GET | `/users/{username}/timeline` | Posts remotos recebidos, mais recentes primeiro |
 
 `/timeline` e `/replies` são endpoints JSON da aplicação (não fazem parte do
@@ -106,7 +112,10 @@ ActivityPub). Eles servem para o frontend ler o que chegou pelo inbox.
 - `followers` / `following`: relações locais com atores remotos.
 - `activities`: atividades enviadas e recebidas (deduplicação e histórico).
 - `deliveries`: fila de entrega com tentativas e backoff.
-- `remote_posts`: posts e respostas recebidos pelo inbox.
+- `remote_posts`: posts e respostas recebidos pelo inbox, incluindo as
+  contagens de curtidas, reposts e respostas informadas pelo servidor de origem.
+- `remote_interactions`: curtidas (`like`) e reposts (`repost`) recebidos para
+  posts locais, uma linha por ator/objeto/tipo.
 
 ## Visibilidade
 
@@ -121,7 +130,7 @@ ActivityPub). Eles servem para o frontend ler o que chegou pelo inbox.
 
 O ator publica `avatar_url` como `icon` e `header_url` como `image`. As imagens
 são URLs públicas; a forma mais simples é colocá-las em `frontend/public`
-(ex.: `profile.png` e `banner.jpg`) para o nginx servir na raiz do domínio.
+(ex.: `profile.jpg` e `banner.jpg`) para o nginx servir na raiz do domínio.
 
 Depois de publicar os arquivos, atualize o perfil:
 
@@ -135,7 +144,7 @@ curl -b /tmp/cookies -s -X PUT https://moang.com.br/users/caio/profile \
   -d '{
     "display_name": "Caio",
     "summary": "Bio que aparece no perfil do Mastodon",
-    "avatar_url": "https://moang.com.br/profile.png",
+    "avatar_url": "https://moang.com.br/profile.jpg",
     "header_url": "https://moang.com.br/banner.jpg"
   }'
 ```

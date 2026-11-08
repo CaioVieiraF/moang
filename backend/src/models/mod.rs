@@ -5,7 +5,8 @@ mod user;
 use serde::{Deserialize, Serialize};
 
 pub use activity_pub::{
-    ActorKey, Activity, Delivery, Follower, Following, NewDelivery, RemoteActor, RemotePost,
+    Activity, ActorKey, Delivery, Follower, Following, NewDelivery, NewRemoteInteraction,
+    RemoteActor, RemoteInteraction, RemotePost,
 };
 pub use post::{GetPost, NewPost, Post};
 pub use user::User;

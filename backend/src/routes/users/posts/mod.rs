@@ -12,7 +12,7 @@ use crate::{
         activity_pub::content_object::ContentObject,
         users::{has_user, timeline::RemotePostView},
     },
-    schema::{posts, remote_actors, remote_posts},
+    schema::{posts, remote_actors, remote_interactions, remote_posts},
     user_is_loged_in,
 };
 
@@ -50,6 +50,70 @@ pub async fn get_object(session: Session, path: Path<(String, String)>) -> HttpR
             }
         }
         Ok(_) => HttpResponse::NotFound().finish(),
+        Err(error) => HttpResponse::InternalServerError().body(error.to_string()),
+    }
+}
+
+#[get("/posts/{ap_id}/likes")]
+pub async fn get_likes(path: Path<(String, String)>) -> HttpResponse {
+    get_reactions(path, "like", "likes").await
+}
+
+#[get("/posts/{ap_id}/shares")]
+pub async fn get_shares(path: Path<(String, String)>) -> HttpResponse {
+    get_reactions(path, "repost", "shares").await
+}
+
+async fn get_reactions(
+    path: Path<(String, String)>,
+    interaction_type: &str,
+    collection_name: &str,
+) -> HttpResponse {
+    let (username, ap_id) = path.into_inner();
+    let username = username.to_lowercase();
+    let Some(user) = has_user(username.clone()) else {
+        return HttpResponse::NotFound().finish();
+    };
+
+    let Ok(ap_id) = Uuid::parse_str(&ap_id) else {
+        return HttpResponse::NotFound().finish();
+    };
+
+    let connection = &mut establish_connection();
+    let post_exists = posts::table
+        .filter(posts::author.eq(&user.id))
+        .filter(posts::ap_id.eq(ap_id))
+        .select(posts::id)
+        .first::<i32>(connection)
+        .optional();
+
+    match post_exists {
+        Ok(Some(_)) => {}
+        Ok(None) => return HttpResponse::NotFound().finish(),
+        Err(error) => return HttpResponse::InternalServerError().body(error.to_string()),
+    }
+
+    let config = AppConfig::get();
+    let object_url = config.object_url(&username, &ap_id);
+    let collection_url = format!("{object_url}/{collection_name}");
+    let actors = remote_interactions::table
+        .filter(remote_interactions::object_id.eq(&object_url))
+        .filter(remote_interactions::interaction_type.eq(interaction_type))
+        .select(remote_interactions::actor_id)
+        .order(remote_interactions::created_at.desc())
+        .load::<String>(connection);
+
+    match actors {
+        Ok(actors) => HttpResponse::Ok()
+            .content_type(
+                "application/activity+json; profile=\"https://www.w3.org/ns/activitystreams\"",
+            )
+            .json(Json(json!({
+                "id": collection_url,
+                "type": "OrderedCollection",
+                "totalItems": actors.len(),
+                "orderedItems": actors,
+            }))),
         Err(error) => HttpResponse::InternalServerError().body(error.to_string()),
     }
 }

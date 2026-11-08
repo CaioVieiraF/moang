@@ -34,22 +34,98 @@ export const PostTitle = styled.header`
   }
 `
 
+export const PostMeta = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+
+  font-size: 0.85rem;
+  color: ${props => props.theme['secondary-300']};
+
+  .kind {
+    font-size: 0.7rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 0.15rem 0.5rem;
+    border-radius: 999px;
+    color: ${props => props.theme['accent-200']};
+    border: 1px solid ${props => props.theme['accent-400']}70;
+    background: ${props => props.theme['accent-400']}10;
+  }
+
+  .dot {
+    color: ${props => props.theme['secondary-500']};
+  }
+
+  .edited {
+    font-style: italic;
+    color: ${props => props.theme['secondary-500']};
+  }
+`
+
+export const PostStats = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 1.75rem;
+
+  margin: 0 2rem;
+  padding: 1rem 1.5rem;
+
+  border-top: 1px solid ${props => props.theme['secondary-400']}40;
+  border-bottom: 1px solid ${props => props.theme['secondary-400']}40;
+
+  span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+
+    font-size: 0.9rem;
+    color: ${props => props.theme['secondary-300']};
+  }
+
+  span:nth-child(1) svg {
+    color: ${props => props.theme['accent-400']};
+  }
+
+  span:nth-child(2) svg {
+    color: ${props => props.theme['text-300']};
+  }
+
+  span:nth-child(3) svg {
+    color: ${props => props.theme['secondary-300']};
+  }
+`
+
 export const PostReplies = styled.section`
   margin: 2rem;
-  padding: 1rem;
+  padding: 2rem 1rem 0;
   border-top: 2px solid ${props => props.theme['secondary']};
+`
+
+export const PostRepliesHeader = styled.header`
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+
+  margin-bottom: 1.5rem;
 
   h2 {
-    margin-bottom: 1rem;
+    color: ${props => props.theme['accent-100']};
   }
 
-  div {
-    margin-bottom: 1.5rem;
+  small {
+    color: ${props => props.theme['secondary-500']};
   }
+`
 
-  a {
-    color: ${props => props.theme['accent']};
-  }
+export const PostRepliesList = styled.ul`
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+
+  list-style: none;
 `
 
 export const PostTitleBackLink = styled(Link)`
