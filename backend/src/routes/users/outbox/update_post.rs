@@ -18,6 +18,7 @@ struct UpdatePostRequest {
     body: String,
     title: String,
     visibility: Option<String>,
+    kind: Option<String>,
 }
 
 #[put("/posts/{post_id}")]
@@ -57,12 +58,20 @@ pub async fn update_post(
         None => previous.visibility.as_str(),
     };
 
+    let post_kind = match request.kind.as_deref() {
+        Some("article") => "article",
+        Some("microblog") => "microblog",
+        Some(_) => return HttpResponse::BadRequest().body("Invalid kind"),
+        None => previous.kind.as_str(),
+    };
+
     let query_result = diesel::update(posts.find(post_id))
         .set((
             title.eq(&request.title),
             body.eq(&request.body),
             is_public.eq(post_visibility == "public" || post_visibility == "unlisted"),
             visibility.eq(post_visibility),
+            kind.eq(post_kind),
             updated_at.eq(SystemTime::now()),
         ))
         .returning(Post::as_returning())

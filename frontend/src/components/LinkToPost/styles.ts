@@ -23,6 +23,24 @@ export const LinkContainer = styled(Link)`
     text-decoration: none;
   }
 
+  .meta {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .kind {
+    font-size: 0.7rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 0.15rem 0.5rem;
+    border-radius: 999px;
+    color: ${props => props.theme['accent-200']};
+    border: 1px solid ${props => props.theme['accent-400']}70;
+    background: ${props => props.theme['accent-400']}10;
+  }
+
   &:hover {
     cursor: pointer;
     font-weight: bold;

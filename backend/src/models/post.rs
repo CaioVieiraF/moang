@@ -24,6 +24,7 @@ pub struct Post {
     pub ap_id: Uuid,
     pub updated_at: SystemTime,
     pub visibility: String,
+    pub kind: String,
 }
 
 #[derive(Serialize)]
@@ -38,6 +39,7 @@ pub struct GetPost {
     pub ap_id: String,
     pub updated_at: String,
     pub visibility: String,
+    pub kind: String,
 }
 
 impl From<&Post> for GetPost {
@@ -55,6 +57,7 @@ impl From<&Post> for GetPost {
             ap_id: value.ap_id.to_string(),
             updated_at: format!("{}", updated.format("%+")),
             visibility: value.visibility.clone(),
+            kind: value.kind.clone(),
         }
     }
 }
@@ -68,4 +71,5 @@ pub struct NewPost {
     pub slug: String,
     pub author: String,
     pub visibility: String,
+    pub kind: String,
 }

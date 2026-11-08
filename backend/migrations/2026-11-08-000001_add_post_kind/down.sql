@@ -1,0 +1,3 @@
+ALTER TABLE posts
+    DROP CONSTRAINT IF EXISTS posts_kind_check,
+    DROP COLUMN IF EXISTS kind;

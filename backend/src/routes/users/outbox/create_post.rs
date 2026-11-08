@@ -18,6 +18,7 @@ struct NewPostRequest {
     title: String,
     is_public: bool,
     visibility: Option<String>,
+    kind: Option<String>,
 }
 
 #[post("")]
@@ -62,6 +63,13 @@ pub async fn create_post(session: Session, new_post_request: Json<NewPostRequest
         None => "private",
     };
 
+    let kind = match new_post_request.kind.as_deref() {
+        Some("article") => "article",
+        Some("microblog") => "microblog",
+        Some(_) => return HttpResponse::BadRequest().body("Invalid kind"),
+        None => "article",
+    };
+
     let new_post = NewPost {
         title: new_post_request.title.clone(),
         body: new_post_request.body,
@@ -69,6 +77,7 @@ pub async fn create_post(session: Session, new_post_request: Json<NewPostRequest
         slug: slugify(new_post_request.title),
         author: user_id_query.unwrap(),
         visibility: visibility.to_string(),
+        kind: kind.to_string(),
     };
     let query_result = diesel::insert_into(posts::table)
         .values(&new_post)

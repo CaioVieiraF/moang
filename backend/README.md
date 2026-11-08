@@ -30,9 +30,12 @@ objetos para os outros servidores.
 
 - O ator é `GET /users/{username}` (`Person`).
 - O WebFinger responde em `GET /.well-known/webfinger?resource=acct:caio@moang.com.br`.
-- O outbox contém atividades `Create` com objetos `Article`.
-- Cada `Article` tem:
-  - `content`: trecho em HTML com link para o post completo no frontend;
+- O outbox contém atividades `Create` com objetos `Article` ou `Note`,
+  conforme o campo `kind` do post:
+  - `article`: objeto `Article` com trecho em HTML e link para o post completo;
+  - `microblog`: objeto `Note` com o conteúdo Markdown completo convertido para
+    HTML, para o Mastodon renderizar o texto direto no perfil/timeline.
+- Os dois formatos têm:
   - `source.content`: Markdown completo (o frontend usa esse campo);
   - `url`: URL do post no frontend.
 - Posts públicos e não listados aparecem na coleção pública do outbox.
@@ -87,8 +90,8 @@ ActivityPub). Eles servem para o frontend ler o que chegou pelo inbox.
 | --- | --- | --- |
 | POST | `/users/{username}/inbox` | Inbox pessoal (ActivityPub) |
 | POST | `/inbox` | Shared inbox (ActivityPub) |
-| POST | `/users/{username}/outbox` | Cria post (sessão) |
-| PUT | `/users/{username}/outbox/posts/{id}` | Edita post e federar `Update` (sessão) |
+| POST | `/users/{username}/outbox` | Cria post (sessão), com `kind`: `article` ou `microblog` |
+| PUT | `/users/{username}/outbox/posts/{id}` | Edita post e federa `Update` (sessão) |
 | POST | `/users/{username}/following` | Segue um ator remoto (sessão), corpo `{"actor":"https://..."}` |
 | DELETE | `/users/{username}/following` | Deixa de seguir (sessão), mesmo corpo |
 | PUT | `/users/{username}/profile` | Atualiza perfil e federa `Update` do ator (sessão) |
@@ -96,7 +99,8 @@ ActivityPub). Eles servem para o frontend ler o que chegou pelo inbox.
 ## Banco de dados
 
 - `users`: dados do perfil (`display_name`, `summary`, `avatar_url`, `header_url`, `is_locked`, `is_discoverable`).
-- `posts`: conteúdo local, `ap_id` (UUID canônico), `visibility` e `updated_at`.
+- `posts`: conteúdo local, `ap_id` (UUID canônico), `visibility`, `kind`
+  (`article` ou `microblog`) e `updated_at`.
 - `actor_keys`: par de chaves RSA por usuário.
 - `remote_actors`: cache de atores remotos e suas chaves públicas.
 - `followers` / `following`: relações locais com atores remotos.
@@ -140,6 +144,39 @@ Campos omitidos não são alterados; envie `""` para remover uma imagem. A
 atualização envia `Update` do ator para os seguidores, então instâncias remotas
 atualizam nome, bio, avatar e banner. O Mastodon também atualiza o perfil
 periodicamente sozinho.
+
+## Artigo ou microblog
+
+`kind` escolhe como o post é federado:
+
+| `kind` | Objeto ActivityPub | Comportamento no Mastodon |
+| --- | --- | --- |
+| `article` (padrão) | `Article` | título + link para o post no blog |
+| `microblog` | `Note` | conteúdo completo renderizado no post |
+
+Exemplo de post de microblog:
+
+```bash
+curl -b /tmp/cookies -s -X POST https://moang.com.br/users/caio/outbox \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "title": "Nota rápida",
+    "body": "Uma nota curta federada no **Mastodon**.",
+    "visibility": "public",
+    "is_public": true,
+    "kind": "microblog"
+  }'
+```
+
+Para editar e trocar o formato, use o mesmo `kind` no `PUT`:
+
+```bash
+curl -b /tmp/cookies -s -X PUT https://moang.com.br/users/caio/outbox/posts/123 \
+  -H 'Content-Type: application/json' \
+  -d '{"title":"Nota rápida","body":"Texto novo","kind":"microblog"}'
+```
+
+Posts antigos continuam `article` por causa do default da migration.
 
 ## Deploy em produção
 
