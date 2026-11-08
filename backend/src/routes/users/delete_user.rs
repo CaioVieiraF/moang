@@ -1,4 +1,4 @@
-use crate::{establish_connection, user_is_loged_in};
+use crate::{current_user_id, establish_connection, user_is_loged_in};
 use actix_session::Session;
 use actix_web::{delete, web::Path, HttpResponse};
 use diesel::prelude::*;
@@ -11,8 +11,12 @@ pub async fn delete_user(session: Session, path: Path<String>) -> HttpResponse {
         return HttpResponse::Unauthorized().finish();
     }
 
-    let connection = &mut establish_connection();
     let user_id = path.into_inner();
+    if current_user_id(&session).as_deref() != Some(user_id.as_str()) {
+        return HttpResponse::Forbidden().finish();
+    }
+
+    let connection = &mut establish_connection();
     let query_result = diesel::delete(users.find(user_id)).execute(connection);
 
     if query_result.is_ok() {

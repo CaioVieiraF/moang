@@ -1,15 +1,12 @@
-use std::env;
-
 use actix_session::Session;
 use actix_web::{put, web::Json, web::Path, HttpResponse};
 use diesel::{prelude::*, AsChangeset};
-use jsonwebtoken::{DecodingKey, Validation};
 use serde::Deserialize;
 use url::Url;
 
 use crate::{
-    establish_connection,
-    models::{Claims, User},
+    current_user_email, establish_connection,
+    models::User,
     routes::users::{has_user, outbox::publish::publish_actor_update},
     user_is_loged_in,
 };
@@ -39,7 +36,7 @@ pub async fn update_profile(
         return HttpResponse::Unauthorized().finish();
     }
 
-    let Some(session_email) = session_email(&session) else {
+    let Some(session_email) = current_user_email(&session) else {
         return HttpResponse::Unauthorized().finish();
     };
 
@@ -124,18 +121,4 @@ fn normalize_url(value: Option<String>, field: &str) -> Result<Option<String>, S
     }
 
     Ok(Some(value))
-}
-
-fn session_email(session: &Session) -> Option<String> {
-    let token = session.get::<String>("user_identity").ok()??;
-    let secret = env::var("JWT_HASH").ok()?;
-    let claims = jsonwebtoken::decode::<Claims>(
-        token.trim_start_matches("Bearer "),
-        &DecodingKey::from_secret(secret.as_ref()),
-        &Validation::default(),
-    )
-    .ok()?
-    .claims;
-
-    Some(claims.sub)
 }

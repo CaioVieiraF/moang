@@ -377,7 +377,7 @@ fn handle_create(payload: &Value, remote_actor: &RemoteActor) -> Result<(), Stri
         return Ok(());
     }
 
-    save_remote_post(object, remote_actor)
+    save_remote_post(object, payload, remote_actor)
 }
 
 fn handle_update(
@@ -395,7 +395,7 @@ fn handle_update(
         return Ok(());
     }
 
-    save_remote_post(object, remote_actor)
+    save_remote_post(object, payload, remote_actor)
 }
 
 fn handle_delete(payload: &Value, remote_actor: &RemoteActor) -> Result<(), String> {
@@ -422,14 +422,26 @@ fn handle_delete(payload: &Value, remote_actor: &RemoteActor) -> Result<(), Stri
     Ok(())
 }
 
-fn save_remote_post(object: &Value, remote_actor: &RemoteActor) -> Result<(), String> {
+fn save_remote_post(
+    object: &Value,
+    activity: &Value,
+    remote_actor: &RemoteActor,
+) -> Result<(), String> {
     let Some(id) = id_of(object) else {
         return Ok(());
     };
 
+    // Some servers only put HTML in `contentMap`, and some only put the
+    // audience on the wrapping activity instead of on the object.
     let raw_content = object
         .get("content")
         .and_then(Value::as_str)
+        .or_else(|| {
+            object
+                .get("contentMap")
+                .and_then(Value::as_object)
+                .and_then(|map| map.values().find_map(Value::as_str))
+        })
         .unwrap_or_default();
     let content = ammonia::clean(raw_content);
     let summary = object
@@ -447,10 +459,14 @@ fn save_remote_post(object: &Value, remote_actor: &RemoteActor) -> Result<(), St
         .and_then(parse_time);
     let url = object
         .get("url")
-        .and_then(Value::as_str)
-        .map(str::to_string)
-        .or_else(|| Some(id.clone()));
-    let in_reply_to = object.get("inReplyTo").and_then(id_of);
+        .and_then(first_url)
+        .unwrap_or_else(|| id.clone());
+    // Servers disagree on the trailing slash; normalize it so replies always
+    // match the canonical object id used by our own posts.
+    let in_reply_to = object
+        .get("inReplyTo")
+        .and_then(id_of)
+        .map(|value| value.trim_end_matches('/').to_string());
     let sensitive = object
         .get("sensitive")
         .and_then(Value::as_bool)
@@ -458,8 +474,12 @@ fn save_remote_post(object: &Value, remote_actor: &RemoteActor) -> Result<(), St
     let likes_count = collection_total(object.get("likes"));
     let reposts_count = collection_total(object.get("shares"));
     let replies_count = collection_total(object.get("replies"));
-    let to_addresses = json!(ids_of(object.get("to")));
-    let cc_addresses = json!(ids_of(object.get("cc")));
+    let to_addresses = json!(ids_of(
+        object.get("to").or_else(|| activity.get("to"))
+    ));
+    let cc_addresses = json!(ids_of(
+        object.get("cc").or_else(|| activity.get("cc"))
+    ));
 
     let connection = &mut establish_connection();
 
@@ -484,7 +504,7 @@ fn save_remote_post(object: &Value, remote_actor: &RemoteActor) -> Result<(), St
         summary,
         published,
         updated_at,
-        url,
+        url: Some(url),
         in_reply_to,
         sensitive,
         created_at: SystemTime::now(),
@@ -620,6 +640,18 @@ fn ids_of(value: Option<&Value>) -> Vec<String> {
     id_of(value).into_iter().collect()
 }
 
+/// `url` can be a string, an object with `href`, or an array of either.
+fn first_url(value: &Value) -> Option<String> {
+    if let Some(text) = value.as_str() {
+        return Some(text.to_string());
+    }
+    if let Some(href) = value.get("href").and_then(Value::as_str) {
+        return Some(href.to_string());
+    }
+
+    value.as_array()?.iter().find_map(first_url)
+}
+
 fn collection_total(value: Option<&Value>) -> Option<i32> {
     value
         .and_then(|value| value.get("totalItems"))
@@ -645,7 +677,7 @@ fn parse_time(value: &str) -> Option<SystemTime> {
 
 #[cfg(test)]
 mod tests {
-    use super::{collection_total, id_of, ids_of, parse_time, reaction_ids, undo_target_id};
+    use super::{collection_total, first_url, id_of, ids_of, parse_time, reaction_ids, undo_target_id};
     use serde_json::json;
 
     #[test]
@@ -758,5 +790,25 @@ mod tests {
     fn only_rfc3339_timestamps_are_accepted() {
         assert!(parse_time("2026-11-08T01:02:03Z").is_some());
         assert!(parse_time("08/11/2026").is_none());
+    }
+
+    #[test]
+    fn urls_accept_strings_objects_and_arrays() {
+        assert_eq!(
+            first_url(&json!("https://example.com/1")),
+            Some("https://example.com/1".to_string())
+        );
+        assert_eq!(
+            first_url(&json!({ "href": "https://example.com/2", "type": "Link" })),
+            Some("https://example.com/2".to_string())
+        );
+        assert_eq!(
+            first_url(&json!([
+                { "href": "https://example.com/3" },
+                "https://example.com/4"
+            ])),
+            Some("https://example.com/3".to_string())
+        );
+        assert_eq!(first_url(&json!(42)), None);
     }
 }

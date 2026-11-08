@@ -12,6 +12,7 @@ use serde_json::json;
 
 use crate::{
     config::AppConfig,
+    current_user_id,
     establish_connection,
     models::User,
     routes::{
@@ -78,6 +79,9 @@ pub async fn follow(
     let Some(user) = has_user(username.clone()) else {
         return HttpResponse::NotFound().finish();
     };
+    if !owns_account(&session, &user) {
+        return HttpResponse::Forbidden().finish();
+    }
 
     let remote_actor = match fetch_remote_actor(&request.actor, false, Some(&user)).await {
         Ok(actor) => actor,
@@ -149,6 +153,9 @@ pub async fn unfollow(
     let Some(user) = has_user(username.clone()) else {
         return HttpResponse::NotFound().finish();
     };
+    if !owns_account(&session, &user) {
+        return HttpResponse::Forbidden().finish();
+    }
 
     let remote_actor = match fetch_remote_actor(&request.actor, false, Some(&user)).await {
         Ok(actor) => actor,
@@ -218,6 +225,10 @@ pub async fn unfollow(
     }
 
     HttpResponse::NoContent().finish()
+}
+
+fn owns_account(session: &Session, user: &User) -> bool {
+    current_user_id(session).as_deref() == Some(user.id.as_str())
 }
 
 fn following_exists(user: &User, actor_id: &str) -> bool {
