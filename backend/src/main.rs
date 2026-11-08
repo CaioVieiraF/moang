@@ -33,7 +33,9 @@ async fn main() -> std::io::Result<()> {
             .allowed_origin("https://moang.com.br")
             .allowed_origin("https://dev.moang.com.br")
             .allowed_origin_fn(|origin, _req_header| {
-                origin.as_bytes().starts_with(b"http://localhost:")
+                let origin = origin.as_bytes();
+                origin.starts_with(b"http://localhost:")
+                    || origin.starts_with(b"http://127.0.0.1:")
             })
             .allowed_methods(vec!["GET", "POST", "PUT", "DELETE"])
             .supports_credentials()
