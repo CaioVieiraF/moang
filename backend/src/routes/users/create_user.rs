@@ -62,6 +62,7 @@ pub async fn create_user(session: Session, request_data: Json<NewUserRequest>) -
         display_name: name,
         summary: String::new(),
         avatar_url: String::new(),
+        header_url: String::new(),
         created_at: SystemTime::now(),
         is_locked: false,
         is_discoverable: true,

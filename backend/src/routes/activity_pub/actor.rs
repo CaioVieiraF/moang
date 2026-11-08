@@ -27,6 +27,10 @@ pub struct Actor {
     #[serde(skip_serializing_if = "Option::is_none")]
     icon: Option<Icon>,
 
+    /// Profile banner/header. Mastodon reads this as `image`.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    image: Option<Icon>,
+
     #[serde(rename = "preferredUsername")]
     preferred_username: String,
 
@@ -45,18 +49,38 @@ struct Icon {
     obj_type: ObjType,
     url: Url,
 
-    #[serde(rename = "mediaType")]
-    media_type: String,
+    #[serde(rename = "mediaType", skip_serializing_if = "Option::is_none")]
+    media_type: Option<String>,
 }
 
 impl Icon {
     fn new(url: impl Into<String>) -> Result<Icon, String> {
+        let url = url.into();
+        let media_type = media_type_for(&url);
+
         Ok(Icon {
             obj_type: ObjType::Image,
-            url: Url::try_from(url.into())?,
-            media_type: "image/png".into(),
+            url: Url::try_from(url)?,
+            media_type,
         })
     }
+}
+
+fn media_type_for(url: &str) -> Option<String> {
+    let path = url.split(['?', '#']).next().unwrap_or(url).to_lowercase();
+    let media_type = if path.ends_with(".png") {
+        "image/png"
+    } else if path.ends_with(".jpg") || path.ends_with(".jpeg") {
+        "image/jpeg"
+    } else if path.ends_with(".webp") {
+        "image/webp"
+    } else if path.ends_with(".gif") {
+        "image/gif"
+    } else {
+        return None;
+    };
+
+    Some(media_type.to_string())
 }
 
 #[derive(Deserialize, Serialize)]
@@ -97,6 +121,11 @@ impl Actor {
         } else {
             Some(Icon::new(user.avatar_url.clone())?)
         };
+        let image = if user.header_url.trim().is_empty() {
+            None
+        } else {
+            Some(Icon::new(user.header_url.clone())?)
+        };
 
         Ok(Actor {
             activity_pub,
@@ -111,6 +140,7 @@ impl Actor {
             indexable: true,
             name: display_name,
             icon,
+            image,
             preferred_username: user.name.clone(),
             manually_approves_followers: user.is_locked,
             public_key: PubKey {

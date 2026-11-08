@@ -120,6 +120,7 @@ diesel::table! {
         display_name -> Varchar,
         summary -> Text,
         avatar_url -> Text,
+        header_url -> Text,
         created_at -> Timestamp,
         is_locked -> Bool,
         is_discoverable -> Bool,

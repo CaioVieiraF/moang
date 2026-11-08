@@ -91,10 +91,11 @@ ActivityPub). Eles servem para o frontend ler o que chegou pelo inbox.
 | PUT | `/users/{username}/outbox/posts/{id}` | Edita post e federar `Update` (sessão) |
 | POST | `/users/{username}/following` | Segue um ator remoto (sessão), corpo `{"actor":"https://..."}` |
 | DELETE | `/users/{username}/following` | Deixa de seguir (sessão), mesmo corpo |
+| PUT | `/users/{username}/profile` | Atualiza perfil e federa `Update` do ator (sessão) |
 
 ## Banco de dados
 
-- `users`: dados do perfil (`display_name`, `summary`, `avatar_url`, `is_locked`, `is_discoverable`).
+- `users`: dados do perfil (`display_name`, `summary`, `avatar_url`, `header_url`, `is_locked`, `is_discoverable`).
 - `posts`: conteúdo local, `ap_id` (UUID canônico), `visibility` e `updated_at`.
 - `actor_keys`: par de chaves RSA por usuário.
 - `remote_actors`: cache de atores remotos e suas chaves públicas.
@@ -111,6 +112,34 @@ ActivityPub). Eles servem para o frontend ler o que chegou pelo inbox.
 | `unlisted` | true | seguidores | `#Public` |
 | `followers` | false | seguidores | vazio |
 | `private` | false | vazio | vazio, não federado |
+
+## Foto de perfil e banner
+
+O ator publica `avatar_url` como `icon` e `header_url` como `image`. As imagens
+são URLs públicas; a forma mais simples é colocá-las em `frontend/public`
+(ex.: `profile.png` e `banner.jpg`) para o nginx servir na raiz do domínio.
+
+Depois de publicar os arquivos, atualize o perfil:
+
+```bash
+curl -c /tmp/cookies -s -X POST https://moang.com.br/login \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"caio@moang.com.br","password":"SUA_SENHA"}'
+
+curl -b /tmp/cookies -s -X PUT https://moang.com.br/users/caio/profile \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "display_name": "Caio",
+    "summary": "Bio que aparece no perfil do Mastodon",
+    "avatar_url": "https://moang.com.br/profile.png",
+    "header_url": "https://moang.com.br/banner.jpg"
+  }'
+```
+
+Campos omitidos não são alterados; envie `""` para remover uma imagem. A
+atualização envia `Update` do ator para os seguidores, então instâncias remotas
+atualizam nome, bio, avatar e banner. O Mastodon também atualiza o perfil
+periodicamente sozinho.
 
 ## Deploy em produção
 
