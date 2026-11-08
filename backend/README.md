@@ -130,7 +130,7 @@ ActivityPub). Eles servem para o frontend ler o que chegou pelo inbox.
 
 O ator publica `avatar_url` como `icon` e `header_url` como `image`. As imagens
 são URLs públicas; a forma mais simples é colocá-las em `frontend/public`
-(ex.: `profile.png` e `banner.jpg`) para o nginx servir na raiz do domínio.
+(ex.: `profile.jpg` e `banner.jpg`) para o nginx servir na raiz do domínio.
 
 Depois de publicar os arquivos, atualize o perfil:
 
@@ -144,7 +144,7 @@ curl -b /tmp/cookies -s -X PUT https://moang.com.br/users/caio/profile \
   -d '{
     "display_name": "Caio",
     "summary": "Bio que aparece no perfil do Mastodon",
-    "avatar_url": "https://moang.com.br/profile.png",
+    "avatar_url": "https://moang.com.br/profile.jpg",
     "header_url": "https://moang.com.br/banner.jpg"
   }'
 ```
