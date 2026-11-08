@@ -3,10 +3,8 @@ import styled from 'styled-components'
 
 export const LinkContainer = styled(Link)`
   display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1.25rem;
+  flex-direction: column;
+  gap: 0.6rem;
   text-decoration: none;
 
   color: ${props => props.theme['text']};
@@ -19,13 +17,6 @@ export const LinkContainer = styled(Link)`
   border-radius: 3px;
   margin-bottom: 1rem;
   padding: 2rem;
-
-  .post {
-    display: flex;
-    flex-direction: column;
-    gap: 0.6rem;
-    min-width: 0;
-  }
 
   h3 {
     text-decoration: none;
@@ -51,34 +42,6 @@ export const LinkContainer = styled(Link)`
     background: ${props => props.theme['accent-400']}10;
   }
 
-  .stats {
-    display: flex;
-    align-items: center;
-    gap: 1.25rem;
-    flex-shrink: 0;
-
-    span {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.35rem;
-
-      font-size: 0.8rem;
-      color: ${props => props.theme['secondary-300']};
-    }
-
-    span:nth-child(1) svg {
-      color: ${props => props.theme['accent-400']};
-    }
-
-    span:nth-child(2) svg {
-      color: ${props => props.theme['text-300']};
-    }
-
-    span:nth-child(3) svg {
-      color: ${props => props.theme['secondary-300']};
-    }
-  }
-
   &:hover {
     cursor: pointer;
     font-weight: bold;
@@ -94,13 +57,6 @@ export const LinkContainer = styled(Link)`
   }
 
   @media (max-width: 600px) {
-    flex-direction: column;
-    align-items: flex-start;
     padding: 1.25rem;
-
-    .stats {
-      flex-wrap: wrap;
-      gap: 0.85rem;
-    }
   }
 `

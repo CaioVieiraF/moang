@@ -17,8 +17,8 @@ import { PostObject } from '../Posts'
 import { FediversePost, FediversePostCard } from '../../components/FediversePostCard'
 import {
   ChatCircleIcon,
-  HeartIcon,
   RepeatIcon,
+  StarIcon,
 } from '@phosphor-icons/react'
 import Markdown from 'react-markdown'
 
@@ -166,7 +166,7 @@ export function Post() {
 
       <PostStats>
         <span title={`${likes} curtidas`} aria-label={`${likes} curtidas`}>
-          <HeartIcon size={18} weight="bold" />
+          <StarIcon size={18} weight="bold" />
           {likes}
         </span>
         <span title={`${reposts} reposts`} aria-label={`${reposts} reposts`}>

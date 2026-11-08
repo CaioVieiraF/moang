@@ -89,7 +89,7 @@ export function Posts() {
   const hasPosts = state === 'ready' && filtered.length > 0
 
   // The backend orders posts by created_at DESC (newest first), the same
-  // order used by the timeline and the RSS feed. No reverse() here.
+  // order used by the RSS feed. No reverse() here.
   return (
     <PostsContainer>
       <Title>
@@ -135,9 +135,6 @@ export function Posts() {
                 title={post.name}
                 createdAt={post.published}
                 kind={kind}
-                likes={post.object.likes?.totalItems ?? 0}
-                reposts={post.object.shares?.totalItems ?? 0}
-                replies={post.object.replies?.totalItems ?? 0}
               />
             )
           })}
