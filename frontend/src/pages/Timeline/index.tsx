@@ -1,29 +1,12 @@
 import { useEffect, useState } from 'react'
 import { PostsContainer, Title } from '../Posts/styles'
+import { TimelineEmpty, TimelineList } from './styles'
 import { api } from '../../lib/axios'
-
-interface RemoteActor {
-  id: string
-  username: string
-  name: string
-  domain: string
-  avatarUrl: string
-}
-
-interface RemotePost {
-  id: string
-  url?: string
-  content: string
-  summary?: string
-  published: string
-  sensitive: boolean
-  inReplyTo?: string
-  actor: RemoteActor
-}
+import { Reply, ReplyCard } from '../../components/ReplyCard'
 
 interface Timeline {
   totalItems: number
-  orderedItems: RemotePost[]
+  orderedItems: Reply[]
 }
 
 export function Timeline() {
@@ -42,21 +25,16 @@ export function Timeline() {
         <h2>Timeline</h2>
         <small>{timeline.totalItems} posts remotos</small>
       </Title>
-      <ul>
-        {timeline.orderedItems.map(post => (
-          <li key={post.id}>
-            <article>
-              <header>
-                <strong>{post.actor.name || `@${post.actor.username}`}</strong>{' '}
-                <small>@{post.actor.username}@{post.actor.domain}</small>
-              </header>
-              {post.summary && <p>{post.summary}</p>}
-              <div dangerouslySetInnerHTML={{ __html: post.content }} />
-              {post.url && <a href={post.url}>Ver original</a>}
-            </article>
-          </li>
-        ))}
-      </ul>
+
+      {timeline.totalItems === 0 ? (
+        <TimelineEmpty>Nenhum post remoto recebido ainda.</TimelineEmpty>
+      ) : (
+        <TimelineList>
+          {timeline.orderedItems.map(post => (
+            <ReplyCard key={post.id} reply={post} />
+          ))}
+        </TimelineList>
+      )}
     </PostsContainer>
   )
 }
