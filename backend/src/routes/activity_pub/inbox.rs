@@ -76,7 +76,11 @@ async fn handle_inbox(req: HttpRequest, body: Bytes, username: Option<String>) -
         .map(|value| value.as_str())
         .unwrap_or("/");
 
-    let mut remote_actor = match fetch_remote_actor(&actor_id, false).await {
+    let Some(local_user) = local_recipient(&payload, username.as_deref()) else {
+        return HttpResponse::Accepted().finish();
+    };
+
+    let mut remote_actor = match fetch_remote_actor(&actor_id, false, Some(&local_user)).await {
         Ok(actor) => actor,
         Err(error) => {
             log::warn!("could not fetch actor {actor_id}: {error}");
@@ -86,7 +90,7 @@ async fn handle_inbox(req: HttpRequest, body: Bytes, username: Option<String>) -
 
     if let Some(key_id) = signature_key_id(&headers) {
         if key_id != remote_actor.public_key_id {
-            remote_actor = match fetch_remote_actor(&actor_id, true).await {
+            remote_actor = match fetch_remote_actor(&actor_id, true, Some(&local_user)).await {
                 Ok(actor) => actor,
                 Err(error) => {
                     log::warn!("could not refresh actor {actor_id}: {error}");
@@ -104,10 +108,6 @@ async fn handle_inbox(req: HttpRequest, body: Bytes, username: Option<String>) -
     if activity_exists(&activity_id) {
         return HttpResponse::Accepted().finish();
     }
-
-    let Some(local_user) = local_recipient(&payload, username.as_deref(), &remote_actor) else {
-        return HttpResponse::Accepted().finish();
-    };
 
     let result = process_activity(&payload, &activity_type, &local_user, &remote_actor);
     if let Err(error) = result {
@@ -144,7 +144,7 @@ fn process_activity(
         "Accept" => set_following_accepted(local_user, remote_actor, true),
         "Reject" => remove_following(local_user, remote_actor),
         "Create" => handle_create(payload, remote_actor),
-        "Update" => handle_update(payload, remote_actor),
+        "Update" => handle_update(payload, local_user, remote_actor),
         "Delete" => handle_delete(payload, remote_actor),
         "Block" => remove_follower_and_following(local_user, remote_actor),
         "Announce" | "Like" | "Flag" => Ok(()),
@@ -328,14 +328,18 @@ fn handle_create(payload: &Value, remote_actor: &RemoteActor) -> Result<(), Stri
     save_remote_post(object, remote_actor)
 }
 
-fn handle_update(payload: &Value, remote_actor: &RemoteActor) -> Result<(), String> {
+fn handle_update(
+    payload: &Value,
+    local_user: &User,
+    remote_actor: &RemoteActor,
+) -> Result<(), String> {
     let Some(object) = payload.get("object") else {
         return Ok(());
     };
 
     let object_id = id_of(object);
     if object_id.as_deref() == Some(remote_actor.id.as_str()) {
-        let _ = fetch_remote_actor(&remote_actor.id, true);
+        let _ = fetch_remote_actor(&remote_actor.id, true, Some(local_user));
         return Ok(());
     }
 
@@ -436,11 +440,7 @@ fn save_remote_post(object: &Value, remote_actor: &RemoteActor) -> Result<(), St
     Ok(())
 }
 
-fn local_recipient(
-    payload: &Value,
-    username: Option<&str>,
-    remote_actor: &RemoteActor,
-) -> Option<User> {
+fn local_recipient(payload: &Value, username: Option<&str>) -> Option<User> {
     if let Some(username) = username {
         return has_user(username.to_string());
     }
@@ -465,24 +465,6 @@ fn local_recipient(
                 || target == &config.inbox_url(&user.name)
         }) {
             return Some((*user).clone());
-        }
-    }
-
-    let followed_by = following::table
-        .filter(following::actor_id.eq(&remote_actor.id))
-        .filter(following::accepted.eq(true))
-        .select(following::user_id)
-        .first::<String>(connection)
-        .optional()
-        .ok()?;
-
-    if let Some(user_id) = followed_by {
-        if let Ok(user) = users::table
-            .find(user_id)
-            .select(User::as_select())
-            .first::<User>(connection)
-        {
-            return Some(user);
         }
     }
 

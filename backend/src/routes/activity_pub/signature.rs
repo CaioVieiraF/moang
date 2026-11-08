@@ -27,6 +27,44 @@ use crate::{
 
 pub const SIGNATURE_HEADER: &str = "signature";
 const SIGNED_HEADERS: &str = "(request-target) host date digest content-type";
+const SIGNED_GET_HEADERS: &str = "(request-target) host date";
+
+/// Sign a GET request.
+///
+/// Some instances (including mastodon.social) use authorized fetch and refuse
+/// to serve actors or objects to unsigned requests.
+pub fn sign_get_request(
+    url: &Url,
+    key: &ActorKey,
+    key_id: &str,
+) -> Result<ReqwestHeaderMap, String> {
+    let host = host_header(url)?;
+    let path = path_and_query(url);
+    let date = httpdate::fmt_http_date(SystemTime::now());
+
+    let signing_string = format!(
+        "(request-target): get {}\nhost: {}\ndate: {}",
+        path, host, date
+    );
+    let signature = rsa_sign(&key.private_key_pem, &signing_string)?;
+    let signature_header = format!(
+        "keyId=\"{key_id}\",algorithm=\"rsa-sha256\",headers=\"{SIGNED_GET_HEADERS}\",signature=\"{signature}\""
+    );
+
+    let mut headers = ReqwestHeaderMap::new();
+    headers.insert(HOST, HeaderValue::from_str(&host).map_err(|e| e.to_string())?);
+    headers.insert(DATE, HeaderValue::from_str(&date).map_err(|e| e.to_string())?);
+    headers.insert(
+        USER_AGENT,
+        HeaderValue::from_str(AppConfig::get().user_agent()).map_err(|e| e.to_string())?,
+    );
+    headers.insert(
+        HeaderName::from_static(SIGNATURE_HEADER),
+        HeaderValue::from_str(&signature_header).map_err(|e| e.to_string())?,
+    );
+
+    Ok(headers)
+}
 
 /// Sign a server-to-server POST using RSA-SHA256.
 ///
@@ -55,13 +93,7 @@ pub fn sign_request(
         content_type
     );
 
-    let private_key =
-        PKey::private_key_from_pem(key.private_key_pem.as_bytes()).map_err(|e| e.to_string())?;
-    let mut signer = Signer::new(MessageDigest::sha256(), &private_key).map_err(|e| e.to_string())?;
-    signer
-        .update(signing_string.as_bytes())
-        .map_err(|e| e.to_string())?;
-    let signature = Base64::encode_string(&signer.sign_to_vec().map_err(|e| e.to_string())?);
+    let signature = rsa_sign(&key.private_key_pem, &signing_string)?;
 
     let signature_header = format!(
         "keyId=\"{key_id}\",algorithm=\"rsa-sha256\",headers=\"{SIGNED_HEADERS}\",signature=\"{signature}\""
@@ -197,6 +229,19 @@ pub fn signature_key_id(headers: &HeaderMap) -> Option<String> {
 
 pub fn digest_header(body: &[u8]) -> String {
     format!("SHA-256={}", Base64::encode_string(&Sha256::digest(body)))
+}
+
+fn rsa_sign(private_key_pem: &str, signing_string: &str) -> Result<String, String> {
+    let private_key =
+        PKey::private_key_from_pem(private_key_pem.as_bytes()).map_err(|e| e.to_string())?;
+    let mut signer = Signer::new(MessageDigest::sha256(), &private_key).map_err(|e| e.to_string())?;
+    signer
+        .update(signing_string.as_bytes())
+        .map_err(|e| e.to_string())?;
+
+    Ok(Base64::encode_string(
+        &signer.sign_to_vec().map_err(|e| e.to_string())?,
+    ))
 }
 
 pub fn host_header(url: &Url) -> Result<String, String> {
