@@ -11,7 +11,7 @@ use diesel::prelude::*;
 use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
 use dotenv::dotenv;
 use jsonwebtoken::{DecodingKey, Validation};
-use models::Claims;
+use models::{Claims, User};
 
 pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations");
 
@@ -66,9 +66,9 @@ pub fn current_user_email(session: &Session) -> Option<String> {
     Some(claims.sub)
 }
 
-/// Id of the logged-in user, ready to be compared with `posts.author` or
-/// `users.id`. Ownership checks must use this instead of trusting the URL.
-pub fn current_user_id(session: &Session) -> Option<String> {
+/// Full record of the logged-in user. Ownership checks must use this instead
+/// of trusting the URL, and the outbox must belong to this same actor.
+pub fn current_user(session: &Session) -> Option<User> {
     use crate::schema::users;
 
     let email = current_user_email(session)?;
@@ -76,7 +76,13 @@ pub fn current_user_id(session: &Session) -> Option<String> {
 
     users::table
         .filter(users::email.eq(&email))
-        .select(users::id)
-        .first::<String>(connection)
+        .select(User::as_select())
+        .first::<User>(connection)
         .ok()
+}
+
+/// Id of the logged-in user, ready to be compared with `posts.author` or
+/// `users.id`.
+pub fn current_user_id(session: &Session) -> Option<String> {
+    current_user(session).map(|user| user.id)
 }

@@ -1,10 +1,10 @@
 use crate::{
-    current_user_id, establish_connection,
+    current_user, establish_connection,
     models::{NewPost, Post},
     user_is_loged_in,
 };
 use actix_session::Session;
-use actix_web::{post, web::Json, HttpResponse};
+use actix_web::{post, web::Json, web::Path, HttpResponse};
 use diesel::prelude::*;
 use serde::Deserialize;
 use slug::slugify;
@@ -20,16 +20,25 @@ struct NewPostRequest {
 }
 
 #[post("")]
-pub async fn create_post(session: Session, new_post_request: Json<NewPostRequest>) -> HttpResponse {
+pub async fn create_post(
+    session: Session,
+    path: Path<String>,
+    new_post_request: Json<NewPostRequest>,
+) -> HttpResponse {
     use crate::schema::posts;
 
     if !user_is_loged_in(&session) {
         return HttpResponse::Unauthorized().finish();
     }
 
-    let Some(author) = current_user_id(&session) else {
+    let Some(user) = current_user(&session) else {
         return HttpResponse::Unauthorized().finish();
     };
+
+    // A C2S Create must be posted to the outbox of its own actor.
+    if user.name != path.into_inner().to_lowercase() {
+        return HttpResponse::Forbidden().finish();
+    }
 
     let new_post_request = new_post_request.into_inner();
     let visibility = match new_post_request.visibility.as_deref() {
@@ -54,7 +63,7 @@ pub async fn create_post(session: Session, new_post_request: Json<NewPostRequest
         body: new_post_request.body,
         is_public: visibility == "public" || visibility == "unlisted",
         slug: slugify(new_post_request.title),
-        author,
+        author: user.id,
         visibility: visibility.to_string(),
         kind: kind.to_string(),
     };
