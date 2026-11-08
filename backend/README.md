@@ -50,7 +50,9 @@ objetos para os outros servidores.
 - O inbox verifica assinatura, `Digest`, deduplica atividades e aceita
   `Follow`, `Undo`, `Accept`, `Reject`, `Create`, `Update`, `Delete`, `Block`,
   `Like` e `Announce`. Curtidas e reposts de posts locais são guardados em
-  `remote_interactions`; `Undo` remove a interação correspondente.
+  `remote_interactions`; `Undo` remove a interação correspondente. Ao salvar um
+  `Update` que não traz as coleções, as contagens anteriores são mantidas, e a
+  audiência (`to`/`cc`) é guardada para remontar a resposta como `Note` válido.
 
 ## Endpoints
 
@@ -59,8 +61,16 @@ objetos para os outros servidores.
 | Método | Caminho | Descrição |
 | --- | --- | --- |
 | GET | `/.well-known/webfinger?resource=acct:caio@moang.com.br` | Descobre o ator |
+| GET | `/.well-known/host-meta` | WebFinger em XRD (software mais antigo) |
+| GET | `/.well-known/host-meta.json` | WebFinger em JRD |
 | GET | `/.well-known/nodeinfo` | Aponta para o NodeInfo 2.1 |
 | GET | `/nodeinfo/2.1` | Estatísticas e protocolos da instância |
+| GET | `/feed.xml` | Feed RSS 2.0 dos posts públicos |
+
+O WebFinger aceita `acct:usuario@dominio`, `usuario@dominio` e a própria URL
+do ator, com domínio em qualquer caixa. O ator em `/users/{username}` responde
+com `Person` para clientes ActivityPub e redireciona navegadores (`text/html`)
+para a página "Sobre", como o Mastodon faz.
 
 NodeInfo é um documento público padronizado que diz "o que esta instância é e
 quais protocolos fala". Ele não é obrigatório para federar, mas ajuda
@@ -87,8 +97,18 @@ ferramentas e diretórios a descobrir que o blog fala ActivityPub.
 | GET | `/users/{username}/posts/{uuid}/shares` | Atores que repostaram o post |
 | GET | `/users/{username}/timeline` | Posts remotos recebidos, mais recentes primeiro |
 
-`/timeline` e `/replies` são endpoints JSON da aplicação (não fazem parte do
-ActivityPub). Eles servem para o frontend ler o que chegou pelo inbox.
+`/likes`, `/shares` e `/replies` são coleções `OrderedCollection` com
+`@context`. A coleção de respostas negocia pelo cabeçalho `Accept`:
+
+- `application/activity+json` ou `application/ld+json`: devolve `Note`s AS2
+  completos (`@context`, `attributedTo`, `inReplyTo`, `to`, `cc`, `content`,
+  `published`, `url`, `summary`, `sensitive`, contagens), além de `orderedItems`
+  e de uma página `first` embutida para consumidores como o Mastodon.
+- `application/json` (o frontend): devolve o JSON compacto com `actor`,
+  `avatarUrl` e as contagens que os cards exibem.
+
+`/timeline` é apenas um endpoint JSON da aplicação para o frontend ler o que
+chegou pelo inbox.
 
 ### Inbox e ações autenticadas
 
@@ -102,6 +122,13 @@ ActivityPub). Eles servem para o frontend ler o que chegou pelo inbox.
 | DELETE | `/users/{username}/following` | Deixa de seguir (sessão), mesmo corpo |
 | PUT | `/users/{username}/profile` | Atualiza perfil e federa `Update` do ator (sessão) |
 
+Todas as ações autenticadas conferem não só a sessão, mas também se o recurso
+pertence ao usuário logado (dono do post, do perfil, da conta ou da relação de
+seguimento). A criação de posts usa `current_user_id` para definir o autor, e
+falhas ao escrever o espelho Gemini são apenas registradas no log: o post é
+salvo e federado mesmo sem `content/index.gmi`. Ao apagar um post, as respostas
+e interações remotas ligadas ao objeto são removidas junto.
+
 ## Banco de dados
 
 - `users`: dados do perfil (`display_name`, `summary`, `avatar_url`, `header_url`, `is_locked`, `is_discoverable`).
@@ -113,7 +140,8 @@ ActivityPub). Eles servem para o frontend ler o que chegou pelo inbox.
 - `activities`: atividades enviadas e recebidas (deduplicação e histórico).
 - `deliveries`: fila de entrega com tentativas e backoff.
 - `remote_posts`: posts e respostas recebidos pelo inbox, incluindo as
-  contagens de curtidas, reposts e respostas informadas pelo servidor de origem.
+  contagens de curtidas, reposts e respostas informadas pelo servidor de origem
+  e a audiência (`to_addresses`/`cc_addresses`) usada para republicar a nota.
 - `remote_interactions`: curtidas (`like`) e reposts (`repost`) recebidos para
   posts locais, uma linha por ator/objeto/tipo.
 
@@ -189,6 +217,22 @@ curl -b /tmp/cookies -s -X PUT https://moang.com.br/users/caio/outbox/posts/123 
 
 Posts antigos continuam `article` por causa do default da migration.
 
+## Feed RSS
+
+`GET /feed.xml` gera um RSS 2.0 com os posts públicos mais recentes (até 20),
+datas em RFC 2822, `guid` permanente e descrição em texto limpo derivada do
+Markdown. O header do site e o `<link rel="alternate">` do `index.html` apontam
+para ele. No nginx de exemplo, `/feed.xml` precisa ser proxyado para o backend
+(por causa do fallback do SPA).
+
+## Frontend
+
+O frontend lê `VITE_API_BASEURL` e `VITE_BLOG_USERNAME` (padrão `caio`). Todas
+as chamadas passam por `userEndpoint()` em `src/lib/blog.ts`, então trocar o
+username não exige editar página por página. A lista de publicações filtra os
+posts já carregados por título e conteúdo, sem endpoint de busca novo, e exibe
+as contagens de curtidas/reposts/respostas vindas do objeto ActivityPub.
+
 ## Deploy em produção
 
 O frontend e o ActivityPub precisam do mesmo domínio para o handle
@@ -198,9 +242,11 @@ o SPA fica na raiz e apenas os caminhos de API/ActivityPub vão para o backend.
 Checklist:
 
 1. Configure `BASE_URL=https://moang.com.br` e `BASE_URL_NAME=moang.com.br`.
-2. Faça o build do frontend com `VITE_API_BASEURL=https://moang.com.br`.
+2. Faça o build do frontend com `VITE_API_BASEURL=https://moang.com.br` e
+   `VITE_BLOG_USERNAME=caio`.
 3. Rode as migrations (automático no startup) e mantenha o worker habilitado.
-4. Libere HTTPS público para `/.well-known/webfinger`, `/users/*` e `/inbox`.
+4. Libere HTTPS público para `/.well-known/*`, `/users/*`, `/inbox`,
+   `/nodeinfo/*` e `/feed.xml`.
 5. Confira `https://moang.com.br/.well-known/webfinger?resource=acct:caio@moang.com.br`.
 
 ## Testando
@@ -209,6 +255,12 @@ Checklist:
 curl -s 'https://moang.com.br/.well-known/webfinger?resource=acct:caio@moang.com.br' | jq
 curl -s https://moang.com.br/users/caio | jq
 curl -s https://moang.com.br/users/caio/outbox/posts | jq
+curl -s https://moang.com.br/feed.xml
+curl -s -H 'Accept: application/activity+json' \
+  https://moang.com.br/users/caio/posts/{uuid}/replies | jq
+
+# Testes unitários (parsing do inbox, coleções, feed, descoberta)
+cargo test --lib
 ```
 
 No Mastodon, procure por `@caio@moang.com.br`. Para testar a entrega, siga o
