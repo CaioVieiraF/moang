@@ -13,10 +13,11 @@ use crate::{
     user_is_loged_in,
 };
 
+/// Partial update: omitted fields keep their current value.
 #[derive(Deserialize)]
 struct UpdatePostRequest {
-    body: String,
-    title: String,
+    body: Option<String>,
+    title: Option<String>,
     visibility: Option<String>,
     kind: Option<String>,
 }
@@ -65,10 +66,13 @@ pub async fn update_post(
         None => previous.kind.as_str(),
     };
 
+    let post_title = request.title.unwrap_or_else(|| previous.title.clone());
+    let post_body = request.body.unwrap_or_else(|| previous.body.clone());
+
     let query_result = diesel::update(posts.find(post_id))
         .set((
-            title.eq(&request.title),
-            body.eq(&request.body),
+            title.eq(&post_title),
+            body.eq(&post_body),
             is_public.eq(post_visibility == "public" || post_visibility == "unlisted"),
             visibility.eq(post_visibility),
             kind.eq(post_kind),
