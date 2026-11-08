@@ -36,20 +36,32 @@ export const PostTitle = styled.header`
 
 export const PostReplies = styled.section`
   margin: 2rem;
-  padding: 1rem;
+  padding: 2rem 1rem 0;
   border-top: 2px solid ${props => props.theme['secondary']};
+`
+
+export const PostRepliesHeader = styled.header`
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+
+  margin-bottom: 1.5rem;
 
   h2 {
-    margin-bottom: 1rem;
+    color: ${props => props.theme['accent-100']};
   }
 
-  div {
-    margin-bottom: 1.5rem;
+  small {
+    color: ${props => props.theme['secondary-500']};
   }
+`
 
-  a {
-    color: ${props => props.theme['accent']};
-  }
+export const PostRepliesList = styled.ul`
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+
+  list-style: none;
 `
 
 export const PostTitleBackLink = styled(Link)`

@@ -1,30 +1,21 @@
 import { useCallback, useEffect, useState } from 'react'
-import { PostContainer, PostReplies, PostTitle, PostTitleBackLink } from './styles'
+import {
+  PostContainer,
+  PostReplies,
+  PostRepliesHeader,
+  PostRepliesList,
+  PostTitle,
+  PostTitleBackLink,
+} from './styles'
 import { useParams } from 'react-router-dom'
 import { api } from '../../lib/axios'
 import { PostObject } from '../Posts'
+import { Reply, ReplyCard } from '../../components/ReplyCard'
 import Markdown from 'react-markdown'
-
-interface RemoteActor {
-  id: string
-  username: string
-  name: string
-  domain: string
-  avatarUrl: string
-}
-
-interface RemotePost {
-  id: string
-  url?: string
-  content: string
-  summary?: string
-  published: string
-  actor: RemoteActor
-}
 
 interface Replies {
   totalItems: number
-  orderedItems: RemotePost[]
+  orderedItems: Reply[]
 }
 
 export function Post() {
@@ -83,17 +74,17 @@ export function Post() {
       </article>
       {replies.totalItems > 0 && (
         <PostReplies>
-          <h2>Respostas ({replies.totalItems})</h2>
-          {replies.orderedItems.map(reply => (
-            <div key={reply.id}>
-              <header>
-                <strong>{reply.actor.name || `@${reply.actor.username}`}</strong>{' '}
-                <small>@{reply.actor.username}@{reply.actor.domain}</small>
-              </header>
-              <div dangerouslySetInnerHTML={{ __html: reply.content }} />
-              {reply.url && <a href={reply.url}>Ver original</a>}
-            </div>
-          ))}
+          <PostRepliesHeader>
+            <h2>Respostas</h2>
+            <small>
+              {replies.totalItems} {replies.totalItems === 1 ? 'resposta' : 'respostas'}
+            </small>
+          </PostRepliesHeader>
+          <PostRepliesList>
+            {replies.orderedItems.map(reply => (
+              <ReplyCard key={reply.id} reply={reply} />
+            ))}
+          </PostRepliesList>
         </PostReplies>
       )}
     </PostContainer>
