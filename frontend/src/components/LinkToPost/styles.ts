@@ -3,8 +3,10 @@ import styled from 'styled-components'
 
 export const LinkContainer = styled(Link)`
   display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
   text-decoration: none;
 
   color: ${props => props.theme['text']};
@@ -19,6 +21,7 @@ export const LinkContainer = styled(Link)`
   padding: 2rem;
 
   h3 {
+    min-width: 0;
     text-decoration: none;
     overflow-wrap: anywhere;
   }
@@ -26,6 +29,7 @@ export const LinkContainer = styled(Link)`
   .meta {
     display: flex;
     align-items: center;
+    flex-shrink: 0;
     gap: 0.75rem;
     flex-wrap: wrap;
   }
@@ -57,6 +61,9 @@ export const LinkContainer = styled(Link)`
   }
 
   @media (max-width: 600px) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.6rem;
     padding: 1.25rem;
   }
 `
