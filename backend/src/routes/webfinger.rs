@@ -120,7 +120,11 @@ fn username_from_resource(resource: &str, domain: &str) -> Option<String> {
 
     let username = if resource.starts_with("http://") || resource.starts_with("https://") {
         let url = Url::parse(resource).ok()?;
-        if !url.host_str()?.eq_ignore_ascii_case(domain) {
+        let host = match url.port() {
+            Some(port) => format!("{}:{port}", url.host_str()?),
+            None => url.host_str()?.to_string(),
+        };
+        if !host.eq_ignore_ascii_case(domain) {
             return None;
         }
 
@@ -171,6 +175,10 @@ mod tests {
         );
         assert_eq!(
             username_from_resource("https://moang.com.br/users/caio/", "moang.com.br"),
+            Some("caio".to_string())
+        );
+        assert_eq!(
+            username_from_resource("http://0.0.0.0:5000/users/caio", "0.0.0.0:5000"),
             Some("caio".to_string())
         );
     }
