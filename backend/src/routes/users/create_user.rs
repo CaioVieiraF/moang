@@ -1,3 +1,5 @@
+use std::time::SystemTime;
+
 use actix_session::Session;
 use actix_web::{post, web::Json, HttpResponse};
 use diesel::{RunQueryDsl, SelectableHelper};
@@ -5,7 +7,12 @@ use serde::Deserialize;
 use uuid::Uuid;
 use validator::Validate;
 
-use crate::{establish_connection, models::User, user_is_loged_in};
+use crate::{
+    establish_connection,
+    models::User,
+    routes::activity_pub::keys::get_or_create_key,
+    user_is_loged_in,
+};
 
 #[derive(Deserialize, Validate)]
 struct NewUserRequest {
@@ -26,7 +33,13 @@ pub async fn create_user(session: Session, request_data: Json<NewUserRequest>) -
     let request_data_user = request_data.into_inner();
 
     if request_data_user.validate().is_err() {
-        return HttpResponse::InternalServerError().finish();
+        return HttpResponse::BadRequest().body("Invalid user data");
+    }
+
+    let name = request_data_user.name.trim().to_lowercase();
+    if !valid_username(&name) {
+        return HttpResponse::BadRequest()
+            .body("Username must contain only lowercase letters, numbers and underscores");
     }
 
     let entropy = Uuid::new_v4();
@@ -41,22 +54,41 @@ pub async fn create_user(session: Session, request_data: Json<NewUserRequest>) -
         return HttpResponse::InternalServerError().finish();
     }
 
-    let new_user = User {
+    let user = User {
         id: Uuid::new_v4().to_string(),
-        name: request_data_user.name,
-        email: request_data_user.email,
+        name: name.clone(),
+        email: request_data_user.email.to_lowercase(),
         password: hashed_password.unwrap(),
+        display_name: name,
+        summary: String::new(),
+        avatar_url: String::new(),
+        header_url: String::new(),
+        created_at: SystemTime::now(),
+        is_locked: false,
+        is_discoverable: true,
     };
 
     let connection = &mut establish_connection();
     let query_result = diesel::insert_into(users::table)
-        .values(&new_user)
+        .values(&user)
         .returning(User::as_returning())
         .execute(connection);
 
-    if query_result.is_ok() {
-        HttpResponse::Created().finish()
-    } else {
-        HttpResponse::InternalServerError().finish()
+    if query_result.is_err() {
+        return HttpResponse::Conflict().body("User or email already exists");
     }
+
+    if let Err(error) = get_or_create_key(&user.id) {
+        return HttpResponse::InternalServerError().body(error);
+    }
+
+    HttpResponse::Created().finish()
+}
+
+fn valid_username(name: &str) -> bool {
+    !name.is_empty()
+        && name.len() <= 64
+        && name
+            .chars()
+            .all(|character| character.is_ascii_lowercase() || character.is_ascii_digit() || character == '_')
 }

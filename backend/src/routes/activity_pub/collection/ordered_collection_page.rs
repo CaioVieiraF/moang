@@ -27,6 +27,7 @@ pub struct OrderedCollectionPageBuilder<I, T, O> {
     id: I,
     total_items: T,
     ordered_items: O,
+    part_of: Option<Url>,
 }
 
 impl OrderedCollectionPageBuilder<NoId, NoTotalItems, NoOrderedItems> {
@@ -35,6 +36,7 @@ impl OrderedCollectionPageBuilder<NoId, NoTotalItems, NoOrderedItems> {
             id: NoId,
             total_items: NoTotalItems,
             ordered_items: NoOrderedItems,
+            part_of: None,
         }
     }
 }
@@ -48,6 +50,7 @@ impl<I> OrderedCollectionPageBuilder<I, NoTotalItems, NoOrderedItems> {
             id: Url::try_from(value.into()).unwrap(),
             total_items: self.total_items,
             ordered_items: self.ordered_items,
+            part_of: self.part_of,
         }
     }
 }
@@ -58,6 +61,7 @@ impl<T, O> OrderedCollectionPageBuilder<Url, T, O> {
             id: self.id,
             total_items: value,
             ordered_items: self.ordered_items,
+            part_of: self.part_of,
         }
     }
 
@@ -69,6 +73,14 @@ impl<T, O> OrderedCollectionPageBuilder<Url, T, O> {
             id: self.id,
             total_items: self.total_items,
             ordered_items: value,
+            part_of: self.part_of,
+        }
+    }
+
+    pub fn part_of(self, value: impl Into<String>) -> Self {
+        OrderedCollectionPageBuilder {
+            part_of: Some(Url::try_from(value.into()).unwrap()),
+            ..self
         }
     }
 }
@@ -79,7 +91,7 @@ impl OrderedCollectionPageBuilder<Url, i64, Vec<OrderedItem>> {
 
         OrderedCollectionPage {
             activity_pub,
-            part_of: self.id,
+            part_of: self.part_of.unwrap_or_else(|| self.id.clone()),
             total_items: self.total_items,
             ordered_items: self.ordered_items,
         }

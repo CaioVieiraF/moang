@@ -1,57 +1,86 @@
-use std::env;
-
-use dotenv::dotenv;
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
-use crate::models::User;
+use crate::{
+    config::AppConfig,
+    models::{ActorKey, User},
+};
 
-use super::{ActivityPub, ObjType, Url};
+use super::{ActivityPub, Context, ObjType, Url};
 
 #[derive(Deserialize, Serialize)]
-pub struct Actor<U = Url> {
+pub struct Actor {
     #[serde(flatten)]
     activity_pub: ActivityPub,
 
-    inbox: U,
-    outbox: U,
-    following: U,
-    followers: U,
-    liked: U,
-    url: U,
+    inbox: Url,
+    outbox: Url,
+    following: Url,
+    followers: Url,
+    url: Url,
     published: String,
     summary: String,
     discoverable: bool,
     indexable: bool,
     name: String,
-    icon: Icon,
 
-    #[serde(rename = "attributionDomains")]
-    attribution_domains: Vec<U>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    icon: Option<Icon>,
+
+    /// Profile banner/header. Mastodon reads this as `image`.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    image: Option<Icon>,
 
     #[serde(rename = "preferredUsername")]
-    prefered_username: String,
+    preferred_username: String,
+
+    #[serde(rename = "manuallyApprovesFollowers")]
+    manually_approves_followers: bool,
 
     #[serde(rename = "publicKey")]
     public_key: PubKey,
+
+    endpoints: Endpoints,
 }
 
 #[derive(Deserialize, Serialize)]
 struct Icon {
+    #[serde(rename = "type")]
     obj_type: ObjType,
     url: Url,
 
-    #[serde(rename = "mediaType")]
-    media_type: String,
+    #[serde(rename = "mediaType", skip_serializing_if = "Option::is_none")]
+    media_type: Option<String>,
 }
 
 impl Icon {
-    fn new(url: impl Into<String>) -> Icon {
-        Icon {
+    fn new(url: impl Into<String>) -> Result<Icon, String> {
+        let url = url.into();
+        let media_type = media_type_for(&url);
+
+        Ok(Icon {
             obj_type: ObjType::Image,
-            url: Url::try_from(url.into()).unwrap(),
-            media_type: "image/png".into(),
-        }
+            url: Url::try_from(url)?,
+            media_type,
+        })
     }
+}
+
+fn media_type_for(url: &str) -> Option<String> {
+    let path = url.split(['?', '#']).next().unwrap_or(url).to_lowercase();
+    let media_type = if path.ends_with(".png") {
+        "image/png"
+    } else if path.ends_with(".jpg") || path.ends_with(".jpeg") {
+        "image/jpeg"
+    } else if path.ends_with(".webp") {
+        "image/webp"
+    } else if path.ends_with(".gif") {
+        "image/gif"
+    } else {
+        return None;
+    };
+
+    Some(media_type.to_string())
 }
 
 #[derive(Deserialize, Serialize)]
@@ -62,58 +91,66 @@ struct PubKey {
     public_key_pem: String,
 }
 
-impl Actor {
-    fn from_user(name: String) -> Actor {
-        dotenv().ok();
-
-        let base_url = env::var("BASE_URL").expect("BASE_URL must be set!");
-        let base_url_name = env::var("BASE_URL_NAME").expect("BASE_URL_NAME must be set!");
-        let summary = env::var("USER_SUMMARY").unwrap_or_default();
-
-        let actor = format!("{base_url}/users/{name}");
-
-        let pub_key = match env::var("PUBLIC_KEY") {
-            Ok(key) => PubKey {
-                owner: actor.clone().try_into().unwrap(),
-                id: actor.clone().try_into().unwrap(),
-                public_key_pem: key,
-            },
-            Err(_) => panic!("PUBLIC_KEY variable not found!"),
-        };
-
-        let activity_pub = ActivityPub::new(actor.clone().try_into().unwrap(), ObjType::Person);
-        let inbox = Url::try_from(format!("{actor}/inbox")).unwrap();
-        let outbox = Url::try_from(format!("{actor}/outbox")).unwrap();
-        let liked = Url::try_from(format!("{actor}/liked")).unwrap();
-        let following = Url::try_from(format!("{actor}/following")).unwrap();
-        let followers = Url::try_from(format!("{actor}/followers")).unwrap();
-
-        let url = Url::try_from("https://moang.com.br".to_string()).unwrap();
-        let icon = Icon::new("https://files.moang.com.br/profile.png".to_string());
-
-        Actor {
-            activity_pub,
-            prefered_username: name.clone(),
-            discoverable: true,
-            indexable: true,
-            published: "2025-29-05T00:00:00Z".into(),
-            attribution_domains: vec![base_url_name.try_into().unwrap()],
-            public_key: pub_key,
-            icon,
-            inbox,
-            outbox,
-            liked,
-            name,
-            following,
-            followers,
-            url,
-            summary,
-        }
-    }
+#[derive(Deserialize, Serialize)]
+struct Endpoints {
+    #[serde(rename = "sharedInbox")]
+    shared_inbox: Url,
 }
 
-impl From<&User> for Actor {
-    fn from(value: &User) -> Self {
-        Actor::from_user(value.name.clone())
+impl Actor {
+    pub fn from_user(user: &User, key: &ActorKey) -> Result<Actor, String> {
+        let config = AppConfig::get();
+        let actor_url = config.actor_url(&user.name);
+        let actor_url = Url::try_from(actor_url)?;
+
+        let activity_pub = ActivityPub::with_context(
+            actor_url.clone(),
+            ObjType::Person,
+            Context::with_security(),
+        );
+
+        let published: DateTime<Utc> = user.created_at.into();
+        let display_name = if user.display_name.trim().is_empty() {
+            user.name.clone()
+        } else {
+            user.display_name.clone()
+        };
+
+        let icon = if user.avatar_url.trim().is_empty() {
+            None
+        } else {
+            Some(Icon::new(user.avatar_url.clone())?)
+        };
+        let image = if user.header_url.trim().is_empty() {
+            None
+        } else {
+            Some(Icon::new(user.header_url.clone())?)
+        };
+
+        Ok(Actor {
+            activity_pub,
+            inbox: Url::try_from(config.inbox_url(&user.name))?,
+            outbox: Url::try_from(config.outbox_url(&user.name))?,
+            following: Url::try_from(config.following_url(&user.name))?,
+            followers: Url::try_from(config.followers_url(&user.name))?,
+            url: Url::try_from(config.profile_url())?,
+            published: format!("{}", published.format("%+")),
+            summary: user.summary.clone(),
+            discoverable: user.is_discoverable,
+            indexable: true,
+            name: display_name,
+            icon,
+            image,
+            preferred_username: user.name.clone(),
+            manually_approves_followers: user.is_locked,
+            public_key: PubKey {
+                id: Url::try_from(config.actor_key_id(&user.name))?,
+                owner: actor_url,
+                public_key_pem: key.public_key_pem.clone(),
+            },
+            endpoints: Endpoints {
+                shared_inbox: Url::try_from(config.shared_inbox_url())?,
+            },
+        })
     }
 }

@@ -27,16 +27,28 @@ export const PostTitle = styled.header`
   gap: 1rem;
   color: ${props => props.theme['accent-100']};
 
-  background: #FFFFFF05;
-  border: 1px solid ${props => props.theme['secondary-400']}70;
-  border-bottom: 1px solid ${props => props.theme['secondary-400']}40;
-  border-right: 1px solid ${props => props.theme['secondary-400']}40;
-  border-radius: 3px;
-  box-shadow: 0 25px 45px rgba(0, 0, 0, .1);
-  backdrop-filter: blur(45px);
+  border-bottom: 2px solid ${props => props.theme['secondary']};
 
   small {
     color: ${props => props.theme['secondary-500']};
+  }
+`
+
+export const PostReplies = styled.section`
+  margin: 2rem;
+  padding: 1rem;
+  border-top: 2px solid ${props => props.theme['secondary']};
+
+  h2 {
+    margin-bottom: 1rem;
+  }
+
+  div {
+    margin-bottom: 1.5rem;
+  }
+
+  a {
+    color: ${props => props.theme['accent']};
   }
 `
 

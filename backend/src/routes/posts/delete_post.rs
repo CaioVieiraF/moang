@@ -1,4 +1,9 @@
-use crate::{establish_connection, models::Post, user_is_loged_in};
+use crate::{
+    establish_connection,
+    models::Post,
+    routes::users::outbox::publish::publish_delete,
+    user_is_loged_in,
+};
 use actix_session::Session;
 use actix_web::{delete, web::Path, HttpResponse};
 use diesel::prelude::*;
@@ -26,6 +31,7 @@ pub async fn delete_post(session: Session, path: Path<i32>) -> HttpResponse {
 
     if let Ok(retrieved_post) = post_query_result {
         if let Some(post_that_exists) = retrieved_post {
+            publish_delete(&post_that_exists, &post_that_exists.author);
             let post_slug = post_that_exists.slug;
             let _ = delete_gemini_post(post_slug).await;
         } else {
