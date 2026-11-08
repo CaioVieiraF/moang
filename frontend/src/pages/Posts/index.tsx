@@ -9,6 +9,7 @@ export interface PostObject {
   name: string,
   object: {
     id: string
+    type?: string
     content: string
     source?: {
       content: string
@@ -51,7 +52,9 @@ export function Posts() {
           const path = new URL(post.id).pathname.split('/')
           const postId = parseInt(path[path.length - 1])
 
-          return <LinkToPost key={post.id} postID={postId} title={post.name} createdAt={post.published} />
+          const kind = post.object.type === 'Note' ? 'Microblog' : 'Artigo'
+
+          return <LinkToPost key={post.id} postID={postId} title={post.name} createdAt={post.published} kind={kind} />
         }).reverse()}
       </ul>
     </PostsContainer>

@@ -76,6 +76,8 @@ diesel::table! {
         updated_at -> Timestamp,
         #[max_length = 16]
         visibility -> Varchar,
+        #[max_length = 16]
+        kind -> Varchar,
     }
 }
 
