@@ -109,6 +109,8 @@ pub struct RemotePost {
     pub likes_count: i32,
     pub reposts_count: i32,
     pub replies_count: i32,
+    pub to_addresses: Value,
+    pub cc_addresses: Value,
 }
 
 #[derive(Queryable, Selectable, Insertable, Serialize, Deserialize, Clone)]
