@@ -91,7 +91,7 @@ ActivityPub). Eles servem para o frontend ler o que chegou pelo inbox.
 | POST | `/users/{username}/inbox` | Inbox pessoal (ActivityPub) |
 | POST | `/inbox` | Shared inbox (ActivityPub) |
 | POST | `/users/{username}/outbox` | Cria post (sessão), com `kind`: `article` ou `microblog` |
-| PUT | `/users/{username}/outbox/posts/{id}` | Edita post e federa `Update` (sessão) |
+| PUT | `/users/{username}/outbox/posts/{id}` | Atualização parcial do post e federa `Update` (sessão) |
 | POST | `/users/{username}/following` | Segue um ator remoto (sessão), corpo `{"actor":"https://..."}` |
 | DELETE | `/users/{username}/following` | Deixa de seguir (sessão), mesmo corpo |
 | PUT | `/users/{username}/profile` | Atualiza perfil e federa `Update` do ator (sessão) |
@@ -168,12 +168,14 @@ curl -b /tmp/cookies -s -X POST https://moang.com.br/users/caio/outbox \
   }'
 ```
 
-Para editar e trocar o formato, use o mesmo `kind` no `PUT`:
+O `PUT` é uma atualização parcial: todos os campos (`title`, `body`,
+`visibility`, `kind`) são opcionais e os omitidos mantêm o valor atual. Para
+trocar só o formato:
 
 ```bash
 curl -b /tmp/cookies -s -X PUT https://moang.com.br/users/caio/outbox/posts/123 \
   -H 'Content-Type: application/json' \
-  -d '{"title":"Nota rápida","body":"Texto novo","kind":"microblog"}'
+  -d '{"kind":"microblog"}'
 ```
 
 Posts antigos continuam `article` por causa do default da migration.
