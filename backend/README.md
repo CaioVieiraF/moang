@@ -107,8 +107,8 @@ ferramentas e diretórios a descobrir que o blog fala ActivityPub.
 - `application/json` (o frontend): devolve o JSON compacto com `actor`,
   `avatarUrl` e as contagens que os cards exibem.
 
-`/timeline` é apenas um endpoint JSON da aplicação para o frontend ler o que
-chegou pelo inbox.
+`/timeline` é um endpoint JSON da aplicação, mantido sem link público no
+frontend para uma futura visualização autenticada.
 
 ### Inbox e ações autenticadas
 
@@ -230,8 +230,9 @@ para ele. No nginx de exemplo, `/feed.xml` precisa ser proxyado para o backend
 O frontend lê `VITE_API_BASEURL` e `VITE_BLOG_USERNAME` (padrão `caio`). Todas
 as chamadas passam por `userEndpoint()` em `src/lib/blog.ts`, então trocar o
 username não exige editar página por página. A lista de publicações filtra os
-posts já carregados por título e conteúdo, sem endpoint de busca novo, e exibe
-as contagens de curtidas/reposts/respostas vindas do objeto ActivityPub.
+posts já carregados por título e conteúdo, sem endpoint de busca novo, e mostra
+apenas título, tipo e data. As contagens de curtidas/reposts/respostas aparecem
+na página do post e nos cards de respostas do fediverso.
 
 ## Deploy em produção
 

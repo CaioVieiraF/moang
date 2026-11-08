@@ -3,7 +3,6 @@ import { DefaultLayout } from './layouts/DefaultLayout'
 import { About } from './pages/About'
 import { Posts } from './pages/Posts'
 import { Post } from './pages/Post'
-import { Timeline } from './pages/Timeline'
 
 export function Router() {
   return (
@@ -13,7 +12,6 @@ export function Router() {
         <Route path="/" element={<Posts />} />
         <Route path="/posts" element={<Posts />} />
         <Route path="/post/:id" element={<Post />} />
-        <Route path="/timeline" element={<Timeline />} />
       </Route>
     </Routes>
 

@@ -1,6 +1,6 @@
 import { API_BASE_URL } from './axios'
 
-/** Username whose outbox, objects and timeline this frontend renders. */
+/** Username whose outbox and objects this frontend renders. */
 export const BLOG_USERNAME = import.meta.env.VITE_BLOG_USERNAME || 'caio'
 
 /** Builds `users/{username}/...` paths from a single place. */
