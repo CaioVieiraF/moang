@@ -16,7 +16,7 @@ use crate::{
     models::{RemoteActor, RemotePost, User},
     routes::{
         activity_pub::{
-            delivery::{enqueue_activity, new_activity_id, save_activity},
+            delivery::{backfill_for_follower, enqueue_activity, new_activity_id, save_activity},
             fetch::{fetch_remote_actor, validate_remote_url},
             signature::{signature_key_id, verify_request},
             Context, ObjType,
@@ -182,6 +182,10 @@ fn handle_follow(
 
     if accepted {
         send_accept(payload, local_user, remote_actor)?;
+        match backfill_for_follower(local_user, &remote_actor.inbox_url) {
+            Ok(count) => log::info!("backfilled {count} posts for {}", remote_actor.id),
+            Err(error) => log::warn!("could not backfill posts for {}: {error}", remote_actor.id),
+        }
     }
 
     Ok(())

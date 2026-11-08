@@ -36,6 +36,10 @@ objetos para os outros servidores.
   - `source.content`: Markdown completo (o frontend usa esse campo);
   - `url`: URL do post no frontend.
 - Posts públicos e não listados aparecem na coleção pública do outbox.
+- Quando um Follow é aceito, os posts existentes (exceto `private`) são enviados
+  ao novo seguidor como atividades `Create`. O Mastodon usa o `totalItems` do
+  outbox como contagem de publicações, mas não importa os itens do outbox: sem
+  esse backfill o perfil mostrava a contagem e nenhum post.
 - Entregas usam HTTP Signatures (RSA-SHA256) e ficam em uma fila persistente no
   banco; o worker tenta novamente com backoff.
 - O inbox verifica assinatura, `Digest`, deduplica atividades e aceita
