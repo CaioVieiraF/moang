@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { Search } from 'react-feather'
 import { SearchButton, SearchInput, SearchPostsContainer } from './styles'
 import { useForm } from 'react-hook-form'
@@ -10,20 +11,33 @@ const SearchFormSchema = z.object({
 
 type SearchFormSchemaType = z.infer<typeof SearchFormSchema>
 
-export function SearchPosts() {
-  const { register, handleSubmit, formState: { isSubmitting } } = useForm<SearchFormSchemaType>({
-    resolver: zodResolver(SearchFormSchema),
-  })
+interface SearchPostsProps {
+  onSearch: (query: string) => void
+}
 
-  function handleSearch(data: SearchFormSchemaType) {
-    console.log(data)
-    // TODO implementar busca de post por título no backend
-  }
+/** Filters the posts the list already loaded, so no extra endpoint is needed. */
+export function SearchPosts({ onSearch }: SearchPostsProps) {
+  const { register, watch } = useForm<SearchFormSchemaType>({
+    resolver: zodResolver(SearchFormSchema),
+    defaultValues: { query: '' },
+  })
+  const query = watch('query') ?? ''
+
+  useEffect(() => {
+    onSearch(query)
+  }, [query, onSearch])
 
   return (
-    <SearchPostsContainer onSubmit={handleSubmit(handleSearch)}>
-      <SearchInput type="text" placeholder="Buscar um post..." {...register('query')} disabled={isSubmitting} />
-      <SearchButton disabled={isSubmitting}><Search size={20} /> Buscar</SearchButton>
+    <SearchPostsContainer onSubmit={event => event.preventDefault()} role="search">
+      <SearchInput
+        type="search"
+        placeholder="Buscar um post..."
+        aria-label="Buscar um post"
+        {...register('query')}
+      />
+      <SearchButton type="submit" aria-label="Buscar">
+        <Search size={20} /> <span className="label">Buscar</span>
+      </SearchButton>
     </SearchPostsContainer>
   )
 }

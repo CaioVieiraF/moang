@@ -1,40 +1,41 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { PostsContainer, Title } from '../Posts/styles'
+import { TimelineEmpty, TimelineList } from './styles'
 import { api } from '../../lib/axios'
+import { userEndpoint } from '../../lib/blog'
+import { FediversePost, FediversePostCard } from '../../components/FediversePostCard'
 
-interface RemoteActor {
-  id: string
-  username: string
-  name: string
-  domain: string
-  avatarUrl: string
-}
-
-interface RemotePost {
-  id: string
-  url?: string
-  content: string
-  summary?: string
-  published: string
-  sensitive: boolean
-  inReplyTo?: string
-  actor: RemoteActor
-}
-
-interface Timeline {
+interface TimelineData {
   totalItems: number
-  orderedItems: RemotePost[]
+  orderedItems: FediversePost[]
 }
+
+type LoadState = 'loading' | 'ready' | 'error'
 
 export function Timeline() {
-  const [timeline, setTimeline] = useState<Timeline>({
+  const [timeline, setTimeline] = useState<TimelineData>({
     totalItems: 0,
     orderedItems: [],
   })
+  const [state, setState] = useState<LoadState>('loading')
+
+  const load = useCallback(async () => {
+    setState('loading')
+    try {
+      const response = await api.get(userEndpoint('/timeline'))
+      setTimeline(response.data)
+      setState('ready')
+    } catch {
+      setState('error')
+    }
+  }, [])
 
   useEffect(() => {
-    api.get('users/caio/timeline').then(response => setTimeline(response.data))
-  }, [])
+    load()
+  }, [load])
+
+  const isEmpty = state === 'ready' && timeline.orderedItems.length === 0
+  const hasPosts = state === 'ready' && timeline.orderedItems.length > 0
 
   return (
     <PostsContainer>
@@ -42,21 +43,25 @@ export function Timeline() {
         <h2>Timeline</h2>
         <small>{timeline.totalItems} posts remotos</small>
       </Title>
-      <ul>
-        {timeline.orderedItems.map(post => (
-          <li key={post.id}>
-            <article>
-              <header>
-                <strong>{post.actor.name || `@${post.actor.username}`}</strong>{' '}
-                <small>@{post.actor.username}@{post.actor.domain}</small>
-              </header>
-              {post.summary && <p>{post.summary}</p>}
-              <div dangerouslySetInnerHTML={{ __html: post.content }} />
-              {post.url && <a href={post.url}>Ver original</a>}
-            </article>
-          </li>
-        ))}
-      </ul>
+
+      {state === 'loading' && <TimelineEmpty>Carregando timeline...</TimelineEmpty>}
+
+      {state === 'error' && (
+        <TimelineEmpty role="alert">
+          Não foi possível carregar a timeline.{' '}
+          <button type="button" onClick={load}>Tentar novamente</button>
+        </TimelineEmpty>
+      )}
+
+      {isEmpty && <TimelineEmpty>Nenhum post remoto recebido ainda.</TimelineEmpty>}
+
+      {hasPosts && (
+        <TimelineList>
+          {timeline.orderedItems.map(post => (
+            <FediversePostCard key={post.id} post={post} />
+          ))}
+        </TimelineList>
+      )}
     </PostsContainer>
   )
 }

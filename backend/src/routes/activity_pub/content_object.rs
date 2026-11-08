@@ -7,7 +7,7 @@ use crate::{
     config::AppConfig,
     establish_connection,
     models::Post,
-    schema::remote_posts,
+    schema::{remote_interactions, remote_posts},
 };
 
 use super::{collection::Collection, Context, ObjType, Url, PUBLIC_COLLECTION};
@@ -22,7 +22,8 @@ pub struct ContentObject {
     #[serde(rename = "type")]
     obj_type: ObjType,
 
-    name: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    name: Option<String>,
     summary: Option<String>,
     content: String,
     source: Source,
@@ -46,6 +47,8 @@ pub struct ContentObject {
     in_reply_to: Option<String>,
 
     replies: Collection,
+    likes: Collection,
+    shares: Collection,
 }
 
 #[derive(Deserialize, Serialize)]
@@ -74,20 +77,44 @@ impl ContentObject {
         let (to, cc) = audience(&value.visibility, &followers_url)?;
         let published: DateTime<Utc> = value.created_at.into();
         let updated: DateTime<Utc> = value.updated_at.into();
+        let obj_type = object_type(&value.kind);
 
         let replies_count = connection_count(&object_url)?;
+        let likes_count = reaction_count(&object_url, "like")?;
+        let shares_count = reaction_count(&object_url, "repost")?;
         let replies = Collection::with_total(
             Url::try_from(format!("{object_url}/replies"))?,
             replies_count,
         );
+        let likes =
+            Collection::with_total(Url::try_from(format!("{object_url}/likes"))?, likes_count);
+        let shares =
+            Collection::with_total(Url::try_from(format!("{object_url}/shares"))?, shares_count);
+
+        // Articles federate a short excerpt plus a link to the blog. Microblog
+        // posts are `Note`s, so Mastodon renders the whole content inline.
+        let name = if obj_type == ObjType::Article {
+            Some(value.title.clone())
+        } else {
+            None
+        };
+        let content = if obj_type == ObjType::Note {
+            markdown_to_html(&value.body)
+        } else {
+            excerpt(
+                &value.body,
+                config.excerpt_length(),
+                &config.frontend_post_url(value.id),
+            )
+        };
 
         Ok(ContentObject {
             context: Context::activity_streams(),
             id: object_url,
-            obj_type: ObjType::Article,
-            name: value.title.clone(),
+            obj_type,
+            name,
             summary: None,
-            content: excerpt(&value.body, config.excerpt_length(), &config.frontend_post_url(value.id)),
+            content,
             source: Source {
                 content: value.body.clone(),
                 media_type: "text/markdown".into(),
@@ -102,6 +129,8 @@ impl ContentObject {
             tag: Vec::new(),
             in_reply_to: None,
             replies,
+            likes,
+            shares,
         })
     }
 }
@@ -129,6 +158,31 @@ fn connection_count(object_url: &Url) -> Result<i32, String> {
         .map_err(|error| error.to_string())?;
 
     Ok(count as i32)
+}
+
+fn reaction_count(object_url: &Url, interaction_type: &str) -> Result<i32, String> {
+    let connection = &mut establish_connection();
+    let count = remote_interactions::table
+        .filter(remote_interactions::object_id.eq(object_url.as_str()))
+        .filter(remote_interactions::interaction_type.eq(interaction_type))
+        .count()
+        .get_result::<i64>(connection)
+        .map_err(|error| error.to_string())?;
+
+    Ok(count as i32)
+}
+
+fn object_type(kind: &str) -> ObjType {
+    match kind {
+        "microblog" => ObjType::Note,
+        _ => ObjType::Article,
+    }
+}
+
+fn markdown_to_html(body: &str) -> String {
+    let mut html_output = String::new();
+    html::push_html(&mut html_output, Parser::new(body));
+    ammonia::clean(&html_output)
 }
 
 fn excerpt(body: &str, length: usize, full_url: &str) -> String {
@@ -159,7 +213,8 @@ fn truncate(value: &str, length: usize) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::{audience, truncate, PUBLIC_COLLECTION};
+    use super::{audience, object_type, truncate, PUBLIC_COLLECTION};
+    use crate::routes::activity_pub::ObjType;
 
     #[test]
     fn public_posts_are_addressed_to_the_public_collection() {
@@ -183,6 +238,13 @@ mod tests {
 
         assert!(to.is_empty());
         assert!(cc.is_empty());
+    }
+
+    #[test]
+    fn microblog_posts_use_note_objects() {
+        assert_eq!(object_type("microblog"), ObjType::Note);
+        assert_eq!(object_type("article"), ObjType::Article);
+        assert_eq!(object_type("anything-else"), ObjType::Article);
     }
 
     #[test]

@@ -36,7 +36,7 @@ pub async fn get_post(session: Session, path: Path<(String, i32)>) -> HttpRespon
             match OrderedItem::from_post(&retrieved_post, &username) {
                 Ok(activity) => HttpResponse::Ok()
                     .content_type(
-                        "application/activity+json; profile=\"https://www.w3.org/ns/activitystreams\"",
+                        "application/activity+json",
                     )
                     .json(Json(activity)),
                 Err(error) => HttpResponse::InternalServerError().body(error),

@@ -21,4 +21,8 @@ export const FooterContainer = styled.footer`
       background: ${props => props.theme['accent-100']};
     }
   }
+
+  @media (max-width: 600px) {
+    padding: 1.25rem;
+  }
 `

@@ -54,7 +54,7 @@ pub async fn get_posts(path: Path<String>) -> HttpResponse {
 
             HttpResponse::Ok()
                 .content_type(
-                    "application/activity+json; profile=\"https://www.w3.org/ns/activitystreams\"",
+                    "application/activity+json",
                 )
                 .json(Json(all_posts))
         }

@@ -7,17 +7,19 @@ use serde::Deserialize;
 use tokio::fs::write;
 
 use crate::{
-    establish_connection,
+    current_user_id, establish_connection,
     models::Post,
     routes::users::outbox::publish::publish_update,
     user_is_loged_in,
 };
 
+/// Partial update: omitted fields keep their current value.
 #[derive(Deserialize)]
 struct UpdatePostRequest {
-    body: String,
-    title: String,
+    body: Option<String>,
+    title: Option<String>,
     visibility: Option<String>,
+    kind: Option<String>,
 }
 
 #[put("/posts/{post_id}")]
@@ -48,6 +50,13 @@ pub async fn update_post(
         Err(error) => return HttpResponse::InternalServerError().body(error.to_string()),
     };
 
+    let Some(user_id) = current_user_id(&session) else {
+        return HttpResponse::Unauthorized().finish();
+    };
+    if previous.author != user_id {
+        return HttpResponse::Forbidden().finish();
+    }
+
     let post_visibility = match request.visibility.as_deref() {
         Some("public") => "public",
         Some("unlisted") => "unlisted",
@@ -57,12 +66,23 @@ pub async fn update_post(
         None => previous.visibility.as_str(),
     };
 
+    let post_kind = match request.kind.as_deref() {
+        Some("article") => "article",
+        Some("microblog") => "microblog",
+        Some(_) => return HttpResponse::BadRequest().body("Invalid kind"),
+        None => previous.kind.as_str(),
+    };
+
+    let post_title = request.title.unwrap_or_else(|| previous.title.clone());
+    let post_body = request.body.unwrap_or_else(|| previous.body.clone());
+
     let query_result = diesel::update(posts.find(post_id))
         .set((
-            title.eq(&request.title),
-            body.eq(&request.body),
+            title.eq(&post_title),
+            body.eq(&post_body),
             is_public.eq(post_visibility == "public" || post_visibility == "unlisted"),
             visibility.eq(post_visibility),
+            kind.eq(post_kind),
             updated_at.eq(SystemTime::now()),
         ))
         .returning(Post::as_returning())

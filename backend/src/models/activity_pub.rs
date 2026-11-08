@@ -106,4 +106,29 @@ pub struct RemotePost {
     pub in_reply_to: Option<String>,
     pub sensitive: bool,
     pub created_at: SystemTime,
+    pub likes_count: i32,
+    pub reposts_count: i32,
+    pub replies_count: i32,
+    pub to_addresses: Value,
+    pub cc_addresses: Value,
+}
+
+#[derive(Queryable, Selectable, Insertable, Serialize, Deserialize, Clone)]
+#[diesel(table_name = crate::schema::remote_interactions)]
+#[diesel(check_for_backend(diesel::pg::Pg))]
+pub struct RemoteInteraction {
+    pub id: String,
+    pub actor_id: String,
+    pub object_id: String,
+    pub interaction_type: String,
+    pub created_at: SystemTime,
+}
+
+#[derive(Insertable)]
+#[diesel(table_name = crate::schema::remote_interactions)]
+pub struct NewRemoteInteraction {
+    pub id: String,
+    pub actor_id: String,
+    pub object_id: String,
+    pub interaction_type: String,
 }

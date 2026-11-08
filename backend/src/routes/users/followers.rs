@@ -33,7 +33,7 @@ pub async fn get_followers(path: Path<String>) -> HttpResponse {
             match collection {
                 Ok(collection) => HttpResponse::Ok()
                     .content_type(
-                        "application/activity+json; profile=\"https://www.w3.org/ns/activitystreams\"",
+                        "application/activity+json",
                     )
                     .json(Json(collection)),
                 Err(error) => HttpResponse::InternalServerError().body(error),
