@@ -36,7 +36,7 @@ export function SearchPosts({ onSearch }: SearchPostsProps) {
         {...register('query')}
       />
       <SearchButton type="submit" aria-label="Buscar">
-        <Search size={20} /> Buscar
+        <Search size={20} /> <span className="label">Buscar</span>
       </SearchButton>
     </SearchPostsContainer>
   )

@@ -12,6 +12,7 @@ export const HeaderContainer = styled.header`
 
   nav {
     display: flex;
+    align-items: center;
     gap: 1rem;
 
     a {
@@ -23,6 +24,15 @@ export const HeaderContainer = styled.header`
         background: ${props => props.theme['accent-200']};
         text-decoration: underline;
       }
+    }
+  }
+
+  @media (max-width: 600px) {
+    padding: 1.25rem 1rem;
+
+    nav {
+      gap: 0.75rem;
+      font-size: 0.9rem;
     }
   }
 `
@@ -41,5 +51,9 @@ export const Logo = styled(Link)`
 
     text-decoration: underline;
     transition: text-shadow 0.1s, color 0.1s, background-color 0.1s;
+  }
+
+  @media (max-width: 600px) {
+    font-size: 1.5rem;
   }
 `

@@ -1,23 +1,38 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { PostsContainer, Title } from '../Posts/styles'
 import { TimelineEmpty, TimelineList } from './styles'
 import { api } from '../../lib/axios'
-import { Reply, ReplyCard } from '../../components/ReplyCard'
+import { userEndpoint } from '../../lib/blog'
+import { FediversePost, FediversePostCard } from '../../components/FediversePostCard'
 
 interface Timeline {
   totalItems: number
-  orderedItems: Reply[]
+  orderedItems: FediversePost[]
 }
+
+type LoadState = 'loading' | 'ready' | 'error'
 
 export function Timeline() {
   const [timeline, setTimeline] = useState<Timeline>({
     totalItems: 0,
     orderedItems: [],
   })
+  const [state, setState] = useState<LoadState>('loading')
+
+  const load = useCallback(async () => {
+    setState('loading')
+    try {
+      const response = await api.get(userEndpoint('/timeline'))
+      setTimeline(response.data)
+      setState('ready')
+    } catch {
+      setState('error')
+    }
+  }, [])
 
   useEffect(() => {
-    api.get('users/caio/timeline').then(response => setTimeline(response.data))
-  }, [])
+    load()
+  }, [load])
 
   return (
     <PostsContainer>
@@ -26,14 +41,25 @@ export function Timeline() {
         <small>{timeline.totalItems} posts remotos</small>
       </Title>
 
-      {timeline.totalItems === 0 ? (
-        <TimelineEmpty>Nenhum post remoto recebido ainda.</TimelineEmpty>
-      ) : (
-        <TimelineList>
-          {timeline.orderedItems.map(post => (
-            <ReplyCard key={post.id} reply={post} />
-          ))}
-        </TimelineList>
+      {state === 'loading' && <TimelineEmpty>Carregando timeline...</TimelineEmpty>}
+
+      {state === 'error' && (
+        <TimelineEmpty role="alert">
+          Não foi possível carregar a timeline.{' '}
+          <button type="button" onClick={load}>Tentar novamente</button>
+        </TimelineEmpty>
+      )}
+
+      {state === 'ready' && (
+        timeline.orderedItems.length === 0 ? (
+          <TimelineEmpty>Nenhum post remoto recebido ainda.</TimelineEmpty>
+        ) : (
+          <TimelineList>
+            {timeline.orderedItems.map(post => (
+              <FediversePostCard key={post.id} post={post} />
+            ))}
+          </TimelineList>
+        )
       )}
     </PostsContainer>
   )

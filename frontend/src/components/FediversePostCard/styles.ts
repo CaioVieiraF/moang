@@ -1,6 +1,6 @@
 import styled from 'styled-components'
 
-export const ReplyCardContainer = styled.li`
+export const CardContainer = styled.li`
   display: flex;
   flex-direction: column;
   gap: 1rem;
@@ -13,15 +13,19 @@ export const ReplyCardContainer = styled.li`
   border-bottom: 1px solid ${props => props.theme['secondary-400']}40;
   border-right: 1px solid ${props => props.theme['secondary-400']}40;
   box-shadow: 0 25px 45px rgba(0, 0, 0, .2);
+
+  @media (max-width: 600px) {
+    padding: 1.25rem;
+  }
 `
 
-export const ReplyHeader = styled.header`
+export const CardHeader = styled.header`
   display: flex;
   align-items: center;
   gap: 0.9rem;
 `
 
-export const ReplyAvatar = styled.img`
+export const CardAvatar = styled.img`
   width: 2.75rem;
   height: 2.75rem;
   flex-shrink: 0;
@@ -32,7 +36,7 @@ export const ReplyAvatar = styled.img`
   background: ${props => props.theme['secondary-900']};
 `
 
-export const ReplyAvatarFallback = styled.div`
+export const CardAvatarFallback = styled.div`
   width: 2.75rem;
   height: 2.75rem;
   flex-shrink: 0;
@@ -51,7 +55,7 @@ export const ReplyAvatarFallback = styled.div`
   color: ${props => props.theme['accent-200']};
 `
 
-export const ReplyAuthor = styled.div`
+export const CardAuthor = styled.div`
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
@@ -88,7 +92,7 @@ export const ReplyAuthor = styled.div`
   }
 `
 
-export const ReplySummary = styled.p`
+export const CardSummary = styled.p`
   font-size: 0.9rem;
   color: ${props => props.theme['accent-200']};
 
@@ -98,7 +102,7 @@ export const ReplySummary = styled.p`
   background: ${props => props.theme['secondary-400']}10;
 `
 
-export const ReplyBody = styled.div`
+export const CardBody = styled.div`
   font-size: 1rem;
   line-height: 1.7;
   color: ${props => props.theme['text-100']};
@@ -148,7 +152,7 @@ export const ReplyBody = styled.div`
   }
 `
 
-export const ReplyStats = styled.div`
+export const CardStats = styled.div`
   display: flex;
   align-items: center;
   gap: 1.25rem;
@@ -173,9 +177,13 @@ export const ReplyStats = styled.div`
   span:nth-child(3) svg {
     color: ${props => props.theme['secondary-300']};
   }
+
+  @media (max-width: 600px) {
+    gap: 0.85rem;
+  }
 `
 
-export const ReplyFooter = styled.div`
+export const CardFooter = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;

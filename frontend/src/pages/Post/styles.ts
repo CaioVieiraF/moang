@@ -14,6 +14,16 @@ export const PostContainer = styled.main`
     line-height: 2;
     padding: 1rem;
     white-space: pre-line;
+    overflow-wrap: anywhere;
+  }
+
+  @media (max-width: 600px) {
+    article {
+      margin: 1rem;
+      padding: 0.5rem;
+      font-size: 1rem;
+      line-height: 1.8;
+    }
   }
 `
 
@@ -29,8 +39,16 @@ export const PostTitle = styled.header`
 
   border-bottom: 2px solid ${props => props.theme['secondary']};
 
+  h1 {
+    overflow-wrap: anywhere;
+  }
+
   small {
     color: ${props => props.theme['secondary-500']};
+  }
+
+  @media (max-width: 600px) {
+    padding: 1.5rem 1.25rem;
   }
 `
 
@@ -69,6 +87,7 @@ export const PostStats = styled.div`
   display: flex;
   align-items: center;
   gap: 1.75rem;
+  flex-wrap: wrap;
 
   margin: 0 2rem;
   padding: 1rem 1.5rem;
@@ -96,12 +115,23 @@ export const PostStats = styled.div`
   span:nth-child(3) svg {
     color: ${props => props.theme['secondary-300']};
   }
+
+  @media (max-width: 600px) {
+    margin: 0 1.25rem;
+    padding: 1rem 0.5rem;
+    gap: 1rem;
+  }
 `
 
 export const PostReplies = styled.section`
   margin: 2rem;
   padding: 2rem 1rem 0;
   border-top: 2px solid ${props => props.theme['secondary']};
+
+  @media (max-width: 600px) {
+    margin: 1.5rem 1rem;
+    padding: 1.5rem 0 0;
+  }
 `
 
 export const PostRepliesHeader = styled.header`
@@ -126,6 +156,21 @@ export const PostRepliesList = styled.ul`
   gap: 1rem;
 
   list-style: none;
+`
+
+export const PostState = styled.p`
+  padding: 2rem 1.25rem;
+  text-align: center;
+  color: ${props => props.theme['secondary-300']};
+
+  button {
+    border: 0;
+    background: transparent;
+    color: ${props => props.theme['accent-200']};
+    font-weight: bold;
+    text-decoration: underline;
+    cursor: pointer;
+  }
 `
 
 export const PostTitleBackLink = styled(Link)`

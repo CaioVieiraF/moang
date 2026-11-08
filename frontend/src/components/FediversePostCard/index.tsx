@@ -6,18 +6,18 @@ import {
   RepeatIcon,
 } from '@phosphor-icons/react'
 import {
-  ReplyAuthor,
-  ReplyAvatar,
-  ReplyAvatarFallback,
-  ReplyBody,
-  ReplyCardContainer,
-  ReplyFooter,
-  ReplyHeader,
-  ReplyStats,
-  ReplySummary,
+  CardAuthor,
+  CardAvatar,
+  CardAvatarFallback,
+  CardBody,
+  CardContainer,
+  CardFooter,
+  CardHeader,
+  CardStats,
+  CardSummary,
 } from './styles'
 
-export interface ReplyActor {
+export interface FediverseActor {
   id: string
   username: string
   name: string
@@ -25,7 +25,8 @@ export interface ReplyActor {
   avatarUrl: string
 }
 
-export interface Reply {
+/** A post received from the fediverse: a reply or a timeline entry. */
+export interface FediversePost {
   id: string
   url?: string
   content: string
@@ -36,7 +37,7 @@ export interface Reply {
   likes: number
   reposts: number
   replies: number
-  actor: ReplyActor
+  actor: FediverseActor
 }
 
 const dateFormatter = new Intl.DateTimeFormat('pt-BR', {
@@ -62,21 +63,21 @@ function initials(name: string, username: string) {
   return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase()
 }
 
-interface ReplyCardProps {
-  reply: Reply
+interface FediversePostCardProps {
+  post: FediversePost
 }
 
-export function ReplyCard({ reply }: ReplyCardProps) {
+export function FediversePostCard({ post }: FediversePostCardProps) {
   const [avatarFailed, setAvatarFailed] = useState(false)
-  const { actor } = reply
+  const { actor } = post
   const displayName = actor.name?.trim() || `@${actor.username}`
   const showAvatar = actor.avatarUrl?.trim() !== '' && !avatarFailed
 
   return (
-    <ReplyCardContainer>
-      <ReplyHeader>
+    <CardContainer>
+      <CardHeader>
         {showAvatar ? (
-          <ReplyAvatar
+          <CardAvatar
             src={actor.avatarUrl}
             alt=""
             loading="lazy"
@@ -84,55 +85,55 @@ export function ReplyCard({ reply }: ReplyCardProps) {
             onError={() => setAvatarFailed(true)}
           />
         ) : (
-          <ReplyAvatarFallback aria-hidden="true">
+          <CardAvatarFallback aria-hidden="true">
             {initials(actor.name, actor.username)}
-          </ReplyAvatarFallback>
+          </CardAvatarFallback>
         )}
 
-        <ReplyAuthor>
+        <CardAuthor>
           <strong>{displayName}</strong>
           <span>
             <span className="handle">@{actor.username}@{actor.domain}</span>
             <span className="dot">·</span>
-            <time dateTime={reply.published}>{formatDate(reply.published)}</time>
-            {reply.updated && reply.updated !== reply.published && (
+            <time dateTime={post.published}>{formatDate(post.published)}</time>
+            {post.updated && post.updated !== post.published && (
               <>
                 <span className="dot">·</span>
-                <span className="edited" title={formatDate(reply.updated)}>
+                <span className="edited" title={formatDate(post.updated)}>
                   editado
                 </span>
               </>
             )}
           </span>
-        </ReplyAuthor>
-      </ReplyHeader>
+        </CardAuthor>
+      </CardHeader>
 
-      {reply.summary && <ReplySummary>{reply.summary}</ReplySummary>}
+      {post.summary && <CardSummary>{post.summary}</CardSummary>}
 
-      <ReplyBody dangerouslySetInnerHTML={{ __html: reply.content }} />
+      <CardBody dangerouslySetInnerHTML={{ __html: post.content }} />
 
-      <ReplyFooter>
-        <ReplyStats>
-          <span title={`${reply.likes} curtidas`} aria-label={`${reply.likes} curtidas`}>
+      <CardFooter>
+        <CardStats>
+          <span title={`${post.likes} curtidas`} aria-label={`${post.likes} curtidas`}>
             <HeartIcon size={16} weight="bold" />
-            {reply.likes}
+            {post.likes}
           </span>
-          <span title={`${reply.reposts} reposts`} aria-label={`${reply.reposts} reposts`}>
+          <span title={`${post.reposts} reposts`} aria-label={`${post.reposts} reposts`}>
             <RepeatIcon size={16} weight="bold" />
-            {reply.reposts}
+            {post.reposts}
           </span>
-          <span title={`${reply.replies} respostas`} aria-label={`${reply.replies} respostas`}>
+          <span title={`${post.replies} respostas`} aria-label={`${post.replies} respostas`}>
             <ChatCircleIcon size={16} weight="bold" />
-            {reply.replies}
+            {post.replies}
           </span>
-        </ReplyStats>
+        </CardStats>
 
-        {reply.url && (
-          <a href={reply.url} target="_blank" rel="noopener noreferrer">
+        {post.url && (
+          <a href={post.url} target="_blank" rel="noopener noreferrer">
             Ver original <ArrowSquareOutIcon size={16} weight="bold" />
           </a>
         )}
-      </ReplyFooter>
-    </ReplyCardContainer>
+      </CardFooter>
+    </CardContainer>
   )
 }
