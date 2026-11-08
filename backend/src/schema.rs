@@ -109,6 +109,20 @@ diesel::table! {
         in_reply_to -> Nullable<Text>,
         sensitive -> Bool,
         created_at -> Timestamp,
+        likes_count -> Int4,
+        reposts_count -> Int4,
+        replies_count -> Int4,
+    }
+}
+
+diesel::table! {
+    remote_interactions (id) {
+        id -> Text,
+        actor_id -> Text,
+        object_id -> Text,
+        #[max_length = 16]
+        interaction_type -> Varchar,
+        created_at -> Timestamp,
     }
 }
 
@@ -138,6 +152,7 @@ diesel::joinable!(following -> remote_actors (actor_id));
 diesel::joinable!(following -> users (user_id));
 diesel::joinable!(posts -> users (author));
 diesel::joinable!(remote_posts -> remote_actors (actor_id));
+diesel::joinable!(remote_interactions -> remote_actors (actor_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
     activities,
@@ -147,6 +162,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     following,
     posts,
     remote_actors,
+    remote_interactions,
     remote_posts,
     users,
 );

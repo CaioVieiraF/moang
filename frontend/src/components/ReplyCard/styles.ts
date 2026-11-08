@@ -81,6 +81,11 @@ export const ReplyAuthor = styled.div`
   .dot {
     color: ${props => props.theme['secondary-500']};
   }
+
+  .edited {
+    font-style: italic;
+    color: ${props => props.theme['secondary-500']};
+  }
 `
 
 export const ReplySummary = styled.p`
@@ -143,9 +148,39 @@ export const ReplyBody = styled.div`
   }
 `
 
+export const ReplyStats = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+
+  span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+
+    font-size: 0.8rem;
+    color: ${props => props.theme['secondary-300']};
+  }
+
+  span:nth-child(1) svg {
+    color: ${props => props.theme['accent-400']};
+  }
+
+  span:nth-child(2) svg {
+    color: ${props => props.theme['text-300']};
+  }
+
+  span:nth-child(3) svg {
+    color: ${props => props.theme['secondary-300']};
+  }
+`
+
 export const ReplyFooter = styled.div`
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
 
   padding-top: 0.75rem;
   border-top: 1px solid ${props => props.theme['secondary-400']}30;

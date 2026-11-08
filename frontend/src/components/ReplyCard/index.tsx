@@ -1,5 +1,10 @@
 import { useState } from 'react'
-import { ArrowSquareOutIcon } from '@phosphor-icons/react'
+import {
+  ArrowSquareOutIcon,
+  ChatCircleIcon,
+  HeartIcon,
+  RepeatIcon,
+} from '@phosphor-icons/react'
 import {
   ReplyAuthor,
   ReplyAvatar,
@@ -8,6 +13,7 @@ import {
   ReplyCardContainer,
   ReplyFooter,
   ReplyHeader,
+  ReplyStats,
   ReplySummary,
 } from './styles'
 
@@ -25,7 +31,11 @@ export interface Reply {
   content: string
   summary?: string
   published: string
+  updated?: string
   sensitive: boolean
+  likes: number
+  reposts: number
+  replies: number
   actor: ReplyActor
 }
 
@@ -85,6 +95,14 @@ export function ReplyCard({ reply }: ReplyCardProps) {
             <span className="handle">@{actor.username}@{actor.domain}</span>
             <span className="dot">·</span>
             <time dateTime={reply.published}>{formatDate(reply.published)}</time>
+            {reply.updated && reply.updated !== reply.published && (
+              <>
+                <span className="dot">·</span>
+                <span className="edited" title={formatDate(reply.updated)}>
+                  editado
+                </span>
+              </>
+            )}
           </span>
         </ReplyAuthor>
       </ReplyHeader>
@@ -93,13 +111,28 @@ export function ReplyCard({ reply }: ReplyCardProps) {
 
       <ReplyBody dangerouslySetInnerHTML={{ __html: reply.content }} />
 
-      {reply.url && (
-        <ReplyFooter>
+      <ReplyFooter>
+        <ReplyStats>
+          <span title={`${reply.likes} curtidas`} aria-label={`${reply.likes} curtidas`}>
+            <HeartIcon size={16} weight="bold" />
+            {reply.likes}
+          </span>
+          <span title={`${reply.reposts} reposts`} aria-label={`${reply.reposts} reposts`}>
+            <RepeatIcon size={16} weight="bold" />
+            {reply.reposts}
+          </span>
+          <span title={`${reply.replies} respostas`} aria-label={`${reply.replies} respostas`}>
+            <ChatCircleIcon size={16} weight="bold" />
+            {reply.replies}
+          </span>
+        </ReplyStats>
+
+        {reply.url && (
           <a href={reply.url} target="_blank" rel="noopener noreferrer">
             Ver original <ArrowSquareOutIcon size={16} weight="bold" />
           </a>
-        </ReplyFooter>
-      )}
+        )}
+      </ReplyFooter>
     </ReplyCardContainer>
   )
 }

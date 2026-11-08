@@ -31,6 +31,9 @@ pub struct RemotePostView {
     pub published: String,
     pub updated: Option<String>,
     pub sensitive: bool,
+    pub likes: i32,
+    pub reposts: i32,
+    pub replies: i32,
     #[serde(rename = "inReplyTo")]
     pub in_reply_to: Option<String>,
     pub actor: RemoteActorView,
@@ -51,6 +54,9 @@ impl RemotePostView {
                 format!("{}", updated.format("%+"))
             }),
             sensitive: post.sensitive,
+            likes: post.likes_count,
+            reposts: post.reposts_count,
+            replies: post.replies_count,
             in_reply_to: post.in_reply_to.clone(),
             actor: RemoteActorView {
                 id: actor.id.clone(),

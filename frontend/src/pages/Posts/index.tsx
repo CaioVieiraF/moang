@@ -11,9 +11,22 @@ export interface PostObject {
     id: string
     type?: string
     content: string
+    published?: string
+    updated?: string
+    to?: string[]
+    cc?: string[]
     source?: {
       content: string
       mediaType: string
+    }
+    likes?: {
+      totalItems: number
+    }
+    shares?: {
+      totalItems: number
+    }
+    replies?: {
+      totalItems: number
     }
   },
   published: Date

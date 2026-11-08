@@ -13,7 +13,7 @@ use uuid::Uuid;
 use crate::{
     config::AppConfig,
     establish_connection,
-    models::{RemoteActor, RemotePost, User},
+    models::{NewRemoteInteraction, RemoteActor, RemotePost, User},
     routes::{
         activity_pub::{
             delivery::{backfill_for_follower, enqueue_activity, new_activity_id, save_activity},
@@ -23,7 +23,10 @@ use crate::{
         },
         users::has_user,
     },
-    schema::{activities, followers, following, posts, remote_actors, remote_posts, users},
+    schema::{
+        activities, followers, following, posts, remote_actors, remote_interactions, remote_posts,
+        users,
+    },
 };
 
 const MAX_BODY_SIZE: usize = 1_048_576;
@@ -34,11 +37,7 @@ pub async fn shared_inbox(req: HttpRequest, body: Bytes) -> HttpResponse {
 }
 
 #[post("")]
-pub async fn personal_inbox(
-    req: HttpRequest,
-    path: Path<String>,
-    body: Bytes,
-) -> HttpResponse {
+pub async fn personal_inbox(req: HttpRequest, path: Path<String>, body: Bytes) -> HttpResponse {
     handle_inbox(req, body, Some(path.into_inner().to_lowercase())).await
 }
 
@@ -147,7 +146,9 @@ fn process_activity(
         "Update" => handle_update(payload, local_user, remote_actor),
         "Delete" => handle_delete(payload, remote_actor),
         "Block" => remove_follower_and_following(local_user, remote_actor),
-        "Announce" | "Like" | "Flag" => Ok(()),
+        "Like" => handle_reaction(payload, remote_actor, "like"),
+        "Announce" => handle_reaction(payload, remote_actor, "repost"),
+        "Flag" => Ok(()),
         _ => Ok(()),
     }
 }
@@ -225,18 +226,69 @@ fn handle_undo(
     local_user: &User,
     remote_actor: &RemoteActor,
 ) -> Result<(), String> {
-    if !undo_targets_follow(payload, remote_actor) {
+    if undo_targets_follow(payload, remote_actor) {
+        let connection = &mut establish_connection();
+        diesel::delete(
+            followers::table
+                .filter(followers::user_id.eq(&local_user.id))
+                .filter(followers::actor_id.eq(&remote_actor.id)),
+        )
+        .execute(connection)
+        .map_err(|error| error.to_string())?;
+
         return Ok(());
     }
 
+    // Undoing a Like or Announce points at the original activity, so removing
+    // the interaction by its id is enough.
+    let Some(object_id) = payload.get("object").and_then(id_of) else {
+        return Ok(());
+    };
+
     let connection = &mut establish_connection();
     diesel::delete(
-        followers::table
-            .filter(followers::user_id.eq(&local_user.id))
-            .filter(followers::actor_id.eq(&remote_actor.id)),
+        remote_interactions::table
+            .filter(remote_interactions::id.eq(&object_id))
+            .filter(remote_interactions::actor_id.eq(&remote_actor.id)),
     )
     .execute(connection)
     .map_err(|error| error.to_string())?;
+
+    Ok(())
+}
+
+fn handle_reaction(
+    payload: &Value,
+    remote_actor: &RemoteActor,
+    interaction_type: &str,
+) -> Result<(), String> {
+    let Some(object_id) = payload.get("object").and_then(id_of) else {
+        return Ok(());
+    };
+    let object_id = object_id.trim_end_matches('/').to_string();
+    let Some(activity_id) = id_of(payload) else {
+        return Ok(());
+    };
+
+    // Reactions to remote posts are delivered to their own instance, so only
+    // local objects are relevant to this blog.
+    if local_post_author(&object_id).is_none() {
+        return Ok(());
+    }
+
+    let interaction = NewRemoteInteraction {
+        id: activity_id,
+        actor_id: remote_actor.id.clone(),
+        object_id,
+        interaction_type: interaction_type.to_string(),
+    };
+
+    let connection = &mut establish_connection();
+    diesel::insert_into(remote_interactions::table)
+        .values(&interaction)
+        .on_conflict_do_nothing()
+        .execute(connection)
+        .map_err(|error| error.to_string())?;
 
     Ok(())
 }
@@ -407,6 +459,9 @@ fn save_remote_post(object: &Value, remote_actor: &RemoteActor) -> Result<(), St
         .get("sensitive")
         .and_then(Value::as_bool)
         .unwrap_or(false);
+    let likes_count = collection_total(object.get("likes"));
+    let reposts_count = collection_total(object.get("shares"));
+    let replies_count = collection_total(object.get("replies"));
 
     let remote_post = RemotePost {
         id: id.clone(),
@@ -419,6 +474,9 @@ fn save_remote_post(object: &Value, remote_actor: &RemoteActor) -> Result<(), St
         in_reply_to,
         sensitive,
         created_at: SystemTime::now(),
+        likes_count,
+        reposts_count,
+        replies_count,
     };
 
     let connection = &mut establish_connection();
@@ -430,6 +488,9 @@ fn save_remote_post(object: &Value, remote_actor: &RemoteActor) -> Result<(), St
             remote_posts::url.eq(&remote_post.url),
             remote_posts::in_reply_to.eq(&remote_post.in_reply_to),
             remote_posts::sensitive.eq(remote_post.sensitive),
+            remote_posts::likes_count.eq(remote_post.likes_count),
+            remote_posts::reposts_count.eq(remote_post.reposts_count),
+            remote_posts::replies_count.eq(remote_post.replies_count),
         ))
         .execute(connection)
         .map_err(|error| error.to_string())?;
@@ -542,7 +603,38 @@ fn ids_of(value: Option<&Value>) -> Vec<String> {
     id_of(value).into_iter().collect()
 }
 
+fn collection_total(value: Option<&Value>) -> i32 {
+    value
+        .and_then(|value| value.get("totalItems"))
+        .and_then(Value::as_i64)
+        .unwrap_or(0)
+        .clamp(0, i32::MAX as i64) as i32
+}
+
 fn parse_time(value: &str) -> Option<SystemTime> {
     let parsed = DateTime::parse_from_rfc3339(value).ok()?;
     Some(SystemTime::from(parsed.with_timezone(&Utc)))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::collection_total;
+    use serde_json::json;
+
+    #[test]
+    fn reads_collection_totals() {
+        let value = json!({ "type": "Collection", "totalItems": 42 });
+
+        assert_eq!(collection_total(Some(&value)), 42);
+    }
+
+    #[test]
+    fn missing_or_invalid_collection_counts_as_zero() {
+        assert_eq!(collection_total(None), 0);
+        assert_eq!(
+            collection_total(Some(&json!("https://example.com/likes"))),
+            0
+        );
+        assert_eq!(collection_total(Some(&json!({ "totalItems": -3 }))), 0);
+    }
 }
