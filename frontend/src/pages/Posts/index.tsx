@@ -8,6 +8,7 @@ import {
   Title,
 } from './styles'
 import { LinkToPost } from '../../components/LinkToPost'
+import { Banner } from '../../components/Banner'
 import { api } from '../../lib/axios'
 import { userEndpoint } from '../../lib/blog'
 import { SearchPosts } from '../../components/SearchPosts'
@@ -152,6 +153,8 @@ export function Posts() {
   // order used by the RSS feed. No reverse() here.
   return (
     <PostsContainer>
+      <Banner />
+
       <Title>
         <Tabs role="tablist" aria-label="Tipo de publicação">
           {TABS.map(item => (
@@ -198,9 +201,6 @@ export function Posts() {
         <PostsList>
           {filtered.map(post => {
             const postId = Number(post.id.split('/').pop())
-            const kind = post.object.type === 'Note'
-              ? 'Nota'
-              : 'Artigo'
 
             return (
               <LinkToPost
@@ -208,7 +208,6 @@ export function Posts() {
                 postID={postId}
                 title={post.name}
                 createdAt={post.published}
-                kind={kind}
               />
             )
           })}

@@ -26,24 +26,9 @@ export const LinkContainer = styled(Link)`
     overflow-wrap: anywhere;
   }
 
-  .meta {
-    display: flex;
-    align-items: center;
+  small {
     flex-shrink: 0;
-    gap: 0.75rem;
-    flex-wrap: wrap;
-  }
-
-  .kind {
-    font-size: 0.7rem;
-    font-weight: bold;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    padding: 0.15rem 0.5rem;
-    border-radius: 999px;
-    color: ${props => props.theme['accent-200']};
-    border: 1px solid ${props => props.theme['accent-400']}70;
-    background: ${props => props.theme['accent-400']}10;
+    color: ${props => props.theme['text-300']};
   }
 
   &:hover {
@@ -63,7 +48,7 @@ export const LinkContainer = styled(Link)`
   @media (max-width: 600px) {
     flex-direction: column;
     align-items: flex-start;
-    gap: 0.6rem;
+    gap: 0.4rem;
     padding: 1.25rem;
   }
 `
