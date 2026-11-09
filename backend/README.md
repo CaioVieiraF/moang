@@ -221,9 +221,12 @@ Posts antigos continuam `article` por causa do default da migration.
 
 `GET /feed.xml` gera um RSS 2.0 com os posts públicos mais recentes (até 20),
 datas em RFC 2822, `guid` permanente e descrição em texto limpo derivada do
-Markdown. O header do site e o `<link rel="alternate">` do `index.html` apontam
-para ele. No nginx de exemplo, `/feed.xml` precisa ser proxyado para o backend
-(por causa do fallback do SPA).
+Markdown. Cada item também traz `<content:encoded>` com o HTML completo do
+post. O feed inclui `<generator>moang-blog</generator>`, `ETag` forte com
+`If-None-Match` (responde `304 Not Modified`) e `Cache-Control: public,
+max-age=300`. O header do site e o `<link rel="alternate">` do `index.html`
+apontam para ele. No nginx de exemplo, `/feed.xml` precisa ser proxyado para o
+backend (por causa do fallback do SPA).
 
 ## Frontend
 

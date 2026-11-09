@@ -179,7 +179,7 @@ fn object_type(kind: &str) -> ObjType {
     }
 }
 
-fn markdown_to_html(body: &str) -> String {
+pub(crate) fn markdown_to_html(body: &str) -> String {
     let mut html_output = String::new();
     html::push_html(&mut html_output, Parser::new(body));
     ammonia::clean(&html_output)
