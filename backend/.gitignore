@@ -1,10 +1,13 @@
 # Rust
 /target
 .env
+.env.*
+!.env.example
 
 # Gemini
 .certificates/
 content/*
+content-dev/*
 
 # Openssl
 *.pem

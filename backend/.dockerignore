@@ -1,0 +1,17 @@
+target/
+.git/
+.env
+.certificates/
+*.pem
+content/
+
+*.swp
+*.bak
+*~
+
+Dockerfile
+.dockerignore
+docker-compose.yml
+
+logs/
+*.log

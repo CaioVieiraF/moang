@@ -6,8 +6,17 @@ API e implementação ActivityPub do blog.
 
 ```bash
 cp .env.example .env
-docker compose -f infra/compose.yaml up -d
+docker compose -f ../docker-compose.yaml up -d database
 cargo run
+```
+
+Para subir tudo com Docker (banco, backend e nginx), use o `docker-compose.yaml`
+da raiz do repositório. Ele lê `.env` da raiz (credenciais do banco e build do
+frontend, ver `.env.example` da raiz) e `backend/.env` para o backend:
+
+```bash
+cp ../.env.example ../.env
+docker compose -f ../docker-compose.yaml up -d --build
 ```
 
 As migrations são executadas automaticamente na inicialização. O worker de
