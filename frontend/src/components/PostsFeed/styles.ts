@@ -1,15 +1,5 @@
 import styled from 'styled-components'
 
-export const PostsContainer = styled.main`
-  max-width: 76rem;
-  height: 100%;
-  width: 90%;
-  flex-grow: 1;
-
-  margin: 2.5rem auto;
-  border-radius: 3px;
-`
-
 export const Title = styled.div`
   display: flex;
   flex-direction: row;
@@ -26,6 +16,33 @@ export const Title = styled.div`
 
   @media (max-width: 600px) {
     margin: 1.5rem auto;
+  }
+`
+
+export const Tabs = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+`
+
+export const TabButton = styled.button<{ $active: boolean }>`
+  padding: 0.45rem 1.1rem;
+  border-radius: 999px;
+  border: 1px solid ${props => props.theme['secondary-400']}70;
+  background: ${props => props.$active
+    ? `${props.theme['accent-400']}20`
+    : 'transparent'};
+  color: ${props => props.$active
+    ? props.theme['accent-100']
+    : props.theme['secondary-300']};
+  font-weight: ${props => props.$active
+    ? 'bold'
+    : 'normal'};
+  cursor: pointer;
+
+  &:hover {
+    color: ${props => props.theme['accent-100']};
+    border-color: ${props => props.theme['accent-400']}70;
   }
 `
 

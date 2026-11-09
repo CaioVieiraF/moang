@@ -4,14 +4,13 @@ import { BannerContainer } from './styles'
 export function Banner() {
   return (
     <BannerContainer>
-      <h1>Bem vindo ao meu blog!</h1>
-      <p>Olá mundo, esse é o meu registro na internet.
-        Aqui você encontrará postagens sobre devenvolvimento,
-        redes de computadores, algumas estórias e histórias
-        aleatórias, desenvolvimento de jogos e outras coisas
-        sobre tecnologia.
+      <h1>Bem-vindo ao meu blog</h1>
+      <p>
+        Um espaço para registrar ideias sobre desenvolvimento de software,
+        redes de computadores, jogos e outras coisas de tecnologia — às vezes
+        em artigos mais longos, às vezes em notas rápidas.
       </p>
-      <strong>Você pode conhecer melhor minha história <Link to="/about">AQUI</Link></strong>
+      <Link to="/about">Conheça melhor minha história →</Link>
     </BannerContainer>
   )
 }

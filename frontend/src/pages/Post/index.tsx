@@ -13,12 +13,12 @@ import {
 import { useParams } from 'react-router-dom'
 import { api } from '../../lib/axios'
 import { userEndpoint } from '../../lib/blog'
-import { PostObject } from '../Posts'
+import { PostObject } from '../../lib/blog'
 import { FediversePost, FediversePostCard } from '../../components/FediversePostCard'
 import {
   ChatCircleIcon,
-  HeartIcon,
   RepeatIcon,
+  StarIcon,
 } from '@phosphor-icons/react'
 import Markdown from 'react-markdown'
 
@@ -100,7 +100,7 @@ export function Post() {
     return (
       <PostContainer>
         <PostTitle>
-          <PostTitleBackLink to="/posts">{'< Voltar'}</PostTitleBackLink>
+          <PostTitleBackLink to="/">{'< Voltar'}</PostTitleBackLink>
         </PostTitle>
         <PostState role="alert">
           Não foi possível carregar esta publicação.{' '}
@@ -120,7 +120,7 @@ export function Post() {
   })
   const formatedDate = date.format(new Date(post.published))
   const kind = post.object.type === 'Note'
-    ? 'Microblog'
+    ? 'Nota'
     : 'Artigo'
   const visibility = visibilityLabel(post.object.to, post.object.cc)
   const content = post.object.source?.content ?? post.object.content
@@ -136,7 +136,7 @@ export function Post() {
   return (
     <PostContainer>
       <PostTitle>
-        <PostTitleBackLink to="/posts">{'< Voltar'}</PostTitleBackLink>
+        <PostTitleBackLink to="/">{'< Voltar'}</PostTitleBackLink>
         <h1>{post.name}</h1>
         <PostMeta>
           <span className="kind">{kind}</span>
@@ -166,7 +166,7 @@ export function Post() {
 
       <PostStats>
         <span title={`${likes} curtidas`} aria-label={`${likes} curtidas`}>
-          <HeartIcon size={18} weight="bold" />
+          <StarIcon size={18} weight="bold" />
           {likes}
         </span>
         <span title={`${reposts} reposts`} aria-label={`${reposts} reposts`}>
