@@ -1,4 +1,4 @@
-FROM rust:1.89.0-slim-bookworm AS builder
+FROM rust:1-bookworm AS builder
 
 WORKDIR /server/
 
@@ -14,23 +14,26 @@ COPY Cargo.toml Cargo.lock ./
 RUN mkdir src/ && echo "fn main() {}" > src/main.rs
 RUN cargo build --release
 
-RUN rm -rf src/ && rm ./target/release/blog || true
+RUN rm -rf src/ && rm -f ./target/release/blog || true
 
 COPY . .
 
-RUN cargo build --release --bin blog
+RUN find src -name '*.rs' -exec touch {} + && cargo build --release --bin blog
 
-FROM debian:bookworm-slim AS release
+FROM debian:bookworm-slim AS runtime
 
 RUN apt-get update && apt-get install -y \
     libssl3 \
     libpq5 \
+    ca-certificates \
     --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
-WORKDIR /usr/local/bin
+WORKDIR /app
 
-COPY --from=builder /server/target/release/blog .
+COPY --from=builder /server/target/release/blog ./blog
+
+RUN mkdir -p content
 
 EXPOSE 5000
 
