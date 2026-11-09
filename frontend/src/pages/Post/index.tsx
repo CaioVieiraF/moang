@@ -13,7 +13,7 @@ import {
 import { useParams } from 'react-router-dom'
 import { api } from '../../lib/axios'
 import { userEndpoint } from '../../lib/blog'
-import { PostObject } from '../Posts'
+import { PostObject } from '../../lib/blog'
 import { FediversePost, FediversePostCard } from '../../components/FediversePostCard'
 import {
   ChatCircleIcon,
@@ -100,7 +100,7 @@ export function Post() {
     return (
       <PostContainer>
         <PostTitle>
-          <PostTitleBackLink to="/posts">{'< Voltar'}</PostTitleBackLink>
+          <PostTitleBackLink to="/">{'< Voltar'}</PostTitleBackLink>
         </PostTitle>
         <PostState role="alert">
           Não foi possível carregar esta publicação.{' '}
@@ -136,7 +136,7 @@ export function Post() {
   return (
     <PostContainer>
       <PostTitle>
-        <PostTitleBackLink to="/posts">{'< Voltar'}</PostTitleBackLink>
+        <PostTitleBackLink to="/">{'< Voltar'}</PostTitleBackLink>
         <h1>{post.name}</h1>
         <PostMeta>
           <span className="kind">{kind}</span>

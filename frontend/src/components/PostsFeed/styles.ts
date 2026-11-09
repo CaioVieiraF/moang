@@ -1,15 +1,5 @@
 import styled from 'styled-components'
 
-export const PostsContainer = styled.main`
-  max-width: 76rem;
-  height: 100%;
-  width: 90%;
-  flex-grow: 1;
-
-  margin: 2.5rem auto;
-  border-radius: 3px;
-`
-
 export const Title = styled.div`
   display: flex;
   flex-direction: row;

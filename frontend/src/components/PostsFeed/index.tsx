@@ -1,50 +1,19 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
-  PostsContainer,
   PostsList,
   StateMessage,
   TabButton,
   Tabs,
   Title,
 } from './styles'
-import { LinkToPost } from '../../components/LinkToPost'
-import { Banner } from '../../components/Banner'
+import { LinkToPost } from '../LinkToPost'
+import { SearchPosts } from '../SearchPosts'
 import { api } from '../../lib/axios'
-import { userEndpoint } from '../../lib/blog'
-import { SearchPosts } from '../../components/SearchPosts'
-
-export interface PostObject {
-  id: string,
-  name: string,
-  object: {
-    id: string
-    type?: string
-    content: string
-    published?: string
-    updated?: string
-    to?: string[]
-    cc?: string[]
-    source?: {
-      content: string
-      mediaType: string
-    }
-    likes?: {
-      totalItems: number
-    }
-    shares?: {
-      totalItems: number
-    }
-    replies?: {
-      totalItems: number
-    }
-  },
-  published: Date
-}
-
-interface OrderedCollectionPage {
-  totalItems: number,
-  orderedItems: PostObject[]
-}
+import {
+  OrderedCollectionPage,
+  PostObject,
+  userEndpoint,
+} from '../../lib/blog'
 
 type LoadState = 'loading' | 'ready' | 'error'
 type PostTab = 'articles' | 'notes'
@@ -96,7 +65,8 @@ function countLabel(count: number, tab: TabDefinition) {
   return `${count} ${noun}`
 }
 
-export function Posts() {
+/** The publications feed: tabs, search and the list itself. */
+export function PostsFeed() {
   const [posts, setPosts] = useState<OrderedCollectionPage>({
     totalItems: 0,
     orderedItems: [],
@@ -152,9 +122,7 @@ export function Posts() {
   // The backend orders posts by created_at DESC (newest first), the same
   // order used by the RSS feed. No reverse() here.
   return (
-    <PostsContainer>
-      <Banner />
-
+    <>
       <Title>
         <Tabs role="tablist" aria-label="Tipo de publicação">
           {TABS.map(item => (
@@ -213,6 +181,6 @@ export function Posts() {
           })}
         </PostsList>
       )}
-    </PostsContainer>
+    </>
   )
 }
