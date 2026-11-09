@@ -120,7 +120,7 @@ export function Post() {
   })
   const formatedDate = date.format(new Date(post.published))
   const kind = post.object.type === 'Note'
-    ? 'Microblog'
+    ? 'Nota'
     : 'Artigo'
   const visibility = visibilityLabel(post.object.to, post.object.cc)
   const content = post.object.source?.content ?? post.object.content

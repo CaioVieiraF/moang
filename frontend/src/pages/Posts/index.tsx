@@ -1,5 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
-import { PostsContainer, PostsList, StateMessage, Title } from './styles'
+import {
+  PostsContainer,
+  PostsList,
+  StateMessage,
+  TabButton,
+  Tabs,
+  Title,
+} from './styles'
 import { LinkToPost } from '../../components/LinkToPost'
 import { api } from '../../lib/axios'
 import { userEndpoint } from '../../lib/blog'
@@ -39,12 +46,53 @@ interface OrderedCollectionPage {
 }
 
 type LoadState = 'loading' | 'ready' | 'error'
+type PostTab = 'articles' | 'notes'
+
+interface TabDefinition {
+  id: PostTab
+  label: string
+  singular: string
+  plural: string
+  empty: string
+  emptySearch: string
+}
+
+const TABS: TabDefinition[] = [
+  {
+    id: 'articles',
+    label: 'Artigos',
+    singular: 'artigo',
+    plural: 'artigos',
+    empty: 'Nenhum artigo ainda.',
+    emptySearch: 'Nenhum artigo encontrado para esta busca.',
+  },
+  {
+    id: 'notes',
+    label: 'Notas',
+    singular: 'nota',
+    plural: 'notas',
+    empty: 'Nenhuma nota ainda.',
+    emptySearch: 'Nenhuma nota encontrada para esta busca.',
+  },
+]
 
 function normalize(value: string) {
   return value
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
+}
+
+function isNote(post: PostObject) {
+  return post.object.type === 'Note'
+}
+
+function countLabel(count: number, tab: TabDefinition) {
+  const noun = count === 1
+    ? tab.singular
+    : tab.plural
+
+  return `${count} ${noun}`
 }
 
 export function Posts() {
@@ -54,6 +102,7 @@ export function Posts() {
   })
   const [state, setState] = useState<LoadState>('loading')
   const [query, setQuery] = useState('')
+  const [tab, setTab] = useState<PostTab>('articles')
 
   async function getPosts() {
     setState('loading')
@@ -70,11 +119,22 @@ export function Posts() {
     getPosts()
   }, [])
 
+  const activeTab = TABS.find(item => item.id === tab) ?? TABS[0]
+
+  const tabPosts = useMemo(
+    () => posts.orderedItems.filter(post => (
+      tab === 'notes'
+        ? isNote(post)
+        : !isNote(post)
+    )),
+    [posts.orderedItems, tab],
+  )
+
   const filtered = useMemo(() => {
     const term = normalize(query.trim())
-    if (!term) return posts.orderedItems
+    if (!term) return tabPosts
 
-    return posts.orderedItems.filter(post => {
+    return tabPosts.filter(post => {
       const searchable = [
         post.name,
         post.object.source?.content ?? '',
@@ -83,7 +143,7 @@ export function Posts() {
 
       return normalize(searchable).includes(term)
     })
-  }, [posts.orderedItems, query])
+  }, [tabPosts, query])
 
   const isEmpty = state === 'ready' && filtered.length === 0
   const hasPosts = state === 'ready' && filtered.length > 0
@@ -93,11 +153,25 @@ export function Posts() {
   return (
     <PostsContainer>
       <Title>
-        <h2>Publicações</h2>
+        <Tabs role="tablist" aria-label="Tipo de publicação">
+          {TABS.map(item => (
+            <TabButton
+              key={item.id}
+              type="button"
+              role="tab"
+              aria-selected={tab === item.id}
+              $active={tab === item.id}
+              onClick={() => setTab(item.id)}
+            >
+              {item.label}
+            </TabButton>
+          ))}
+        </Tabs>
+
         <small>
           {query.trim()
-            ? `${filtered.length} de ${posts.totalItems} publicações`
-            : `${posts.totalItems} publicações`}
+            ? `${filtered.length} de ${countLabel(tabPosts.length, activeTab)}`
+            : countLabel(tabPosts.length, activeTab)}
         </small>
       </Title>
 
@@ -115,8 +189,8 @@ export function Posts() {
       {isEmpty && (
         <StateMessage>
           {query.trim()
-            ? 'Nenhuma publicação encontrada para esta busca.'
-            : 'Nenhuma publicação ainda.'}
+            ? activeTab.emptySearch
+            : activeTab.empty}
         </StateMessage>
       )}
 
@@ -125,7 +199,7 @@ export function Posts() {
           {filtered.map(post => {
             const postId = Number(post.id.split('/').pop())
             const kind = post.object.type === 'Note'
-              ? 'Microblog'
+              ? 'Nota'
               : 'Artigo'
 
             return (
