@@ -21,7 +21,7 @@ services:
       retries: 10
 
   backend:
-    image: ghcr.io/caiovieirafernandes/moang-backend:prod
+    image: ghcr.io/caiovieiraf/moang-backend:prod
     build: ./backend
     restart: unless-stopped
     env_file:
@@ -39,7 +39,7 @@ services:
         condition: service_healthy
 
   backend-dev:
-    image: ghcr.io/caiovieirafernandes/moang-backend:dev
+    image: ghcr.io/caiovieiraf/moang-backend:dev
     build: ./backend
     restart: unless-stopped
     env_file:
