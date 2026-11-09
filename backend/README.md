@@ -229,10 +229,22 @@ para ele. No nginx de exemplo, `/feed.xml` precisa ser proxyado para o backend
 
 O frontend lê `VITE_API_BASEURL` e `VITE_BLOG_USERNAME` (padrão `caio`). Todas
 as chamadas passam por `userEndpoint()` em `src/lib/blog.ts`, então trocar o
-username não exige editar página por página. A lista de publicações filtra os
-posts já carregados por título e conteúdo, sem endpoint de busca novo, e mostra
-apenas título, tipo e data. As contagens de curtidas/reposts/respostas aparecem
-na página do post e nos cards de respostas do fediverso.
+username não exige editar página por página.
+
+Rotas:
+
+| Rota | Página |
+| --- | --- |
+| `/` | `Home`: banner de apresentação + publicações |
+| `/posts` | Redireciona para `/` (compatibilidade com links antigos) |
+| `/post/{id}` | `Post`: publicação individual e respostas |
+| `/about` | `About` |
+
+A Home usa o componente `PostsFeed`, que separa Artigos e Notas em abas e
+filtra os posts já carregados por título e conteúdo, sem endpoint de busca
+novo. A lista mostra apenas título e data. As contagens de
+curtidas/reposts/respostas aparecem na página do post e nos cards de respostas
+do fediverso.
 
 ## Deploy em produção
 
