@@ -2,7 +2,7 @@
 # Ele faz proxy de moang.com.br -> 127.0.0.1:8080 e dev.moang.com.br -> 127.0.0.1:9090.
 services:
   database:
-    image: postgres:latest
+    image: postgres:18
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER:?Defina POSTGRES_USER no .env da raiz}
@@ -21,6 +21,7 @@ services:
       retries: 10
 
   backend:
+    image: ghcr.io/caiovieirafernandes/moang-backend:prod
     build: ./backend
     restart: unless-stopped
     env_file:
@@ -43,6 +44,7 @@ services:
         condition: service_healthy
 
   backend-dev:
+    image: ghcr.io/caiovieirafernandes/moang-backend:dev
     build: ./backend
     restart: unless-stopped
     env_file:
