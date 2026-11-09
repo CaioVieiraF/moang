@@ -1,6 +1,6 @@
 use std::time::SystemTime;
 
-use actix_web::{get, HttpResponse};
+use actix_web::{get, http::header, HttpResponse};
 use chrono::{DateTime, Utc};
 use diesel::prelude::*;
 use pulldown_cmark::{Event, Parser, Tag, TagEnd};
@@ -20,7 +20,7 @@ pub async fn feed() -> HttpResponse {
     let connection = &mut establish_connection();
     let query = dsl::posts
         .filter(dsl::is_public.eq(true))
-        .order(dsl::created_at.desc())
+        .order((dsl::created_at.desc(), dsl::id.desc()))
         .limit(FEED_LIMIT)
         .select(Post::as_select())
         .load::<Post>(connection);
@@ -48,6 +48,7 @@ pub async fn feed() -> HttpResponse {
 
     HttpResponse::Ok()
         .content_type("application/rss+xml; charset=utf-8")
+        .insert_header((header::CACHE_CONTROL, "public, max-age=300"))
         .body(xml)
 }
 
@@ -59,10 +60,12 @@ struct FeedItem {
 }
 
 fn render_feed(items: &[FeedItem], site_url: &str, feed_url: &str) -> String {
+    // An empty `<lastBuildDate></lastBuildDate>` is not a valid date, so fall
+    // back to the current time when there are no posts yet.
     let last_build_date = items
         .first()
-        .map(|item| item.pub_date.as_str())
-        .unwrap_or_else(|| "");
+        .map(|item| item.pub_date.clone())
+        .unwrap_or_else(|| rss_date(SystemTime::now()));
 
     let mut entries = String::new();
     for item in items {
@@ -91,7 +94,7 @@ fn render_feed(items: &[FeedItem], site_url: &str, feed_url: &str) -> String {
 "#,
         site = xml_escape(site_url),
         feed = xml_escape(feed_url),
-        last_build = xml_escape(last_build_date),
+        last_build = xml_escape(&last_build_date),
         entries = entries,
     )
 }
@@ -173,6 +176,18 @@ mod tests {
             "Título Um texto com código e link."
         );
         assert!(description(&"a".repeat(500)).ends_with('…'));
+    }
+
+    #[test]
+    fn empty_feed_still_has_a_valid_last_build_date() {
+        let xml = render_feed(&[], "https://moang.com.br", "https://moang.com.br/feed.xml");
+        let start = xml.find("<lastBuildDate>").unwrap() + "<lastBuildDate>".len();
+        let end = xml.find("</lastBuildDate>").unwrap();
+        let value = &xml[start..end];
+
+        assert!(!value.is_empty());
+        assert!(chrono::DateTime::parse_from_rfc2822(value).is_ok());
+        assert!(!xml.contains("<item>"));
     }
 
     #[test]
