@@ -2,8 +2,8 @@ import { useState } from 'react'
 import {
   ArrowSquareOutIcon,
   ChatCircleIcon,
-  HeartIcon,
   RepeatIcon,
+  StarIcon,
 } from '@phosphor-icons/react'
 import {
   CardAuthor,
@@ -25,7 +25,7 @@ export interface FediverseActor {
   avatarUrl: string
 }
 
-/** A post received from the fediverse: a reply or a timeline entry. */
+/** A post received from the fediverse, used for replies. */
 export interface FediversePost {
   id: string
   url?: string
@@ -119,7 +119,7 @@ export function FediversePostCard({ post }: FediversePostCardProps) {
       <CardFooter>
         <CardStats>
           <span title={`${post.likes} curtidas`} aria-label={`${post.likes} curtidas`}>
-            <HeartIcon size={16} weight="bold" />
+            <StarIcon size={16} weight="bold" />
             {post.likes}
           </span>
           <span title={`${post.reposts} reposts`} aria-label={`${post.reposts} reposts`}>

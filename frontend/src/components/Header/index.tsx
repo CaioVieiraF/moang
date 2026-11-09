@@ -11,7 +11,6 @@ export function Header() {
         <a href={FEED_URL} title="Feed RSS" aria-label="Feed RSS">
           <Rss size={18} />
         </a>
-        <NavLink to="/timeline" title="timeline">Timeline</NavLink>
         <NavLink to="/about" title="about">Sobre</NavLink>
       </nav>
     </HeaderContainer>
