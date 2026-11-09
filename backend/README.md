@@ -65,7 +65,7 @@ objetos para os outros servidores.
 | GET | `/.well-known/host-meta.json` | WebFinger em JRD |
 | GET | `/.well-known/nodeinfo` | Aponta para o NodeInfo 2.1 |
 | GET | `/nodeinfo/2.1` | Estatísticas e protocolos da instância |
-| GET | `/feed.xml` | Feed RSS 2.0 dos posts públicos |
+| GET | `/feed.xml` | Feed RSS 2.0 dos artigos públicos |
 
 O WebFinger aceita `acct:usuario@dominio`, `usuario@dominio` e a própria URL
 do ator, com domínio em qualquer caixa. O ator em `/users/{username}` responde
@@ -219,10 +219,11 @@ Posts antigos continuam `article` por causa do default da migration.
 
 ## Feed RSS
 
-`GET /feed.xml` gera um RSS 2.0 com os posts públicos mais recentes (até 20),
+`GET /feed.xml` gera um RSS 2.0 com os artigos públicos mais recentes (até 20),
 datas em RFC 2822, `guid` permanente e descrição em texto limpo derivada do
-Markdown. Cada item também traz `<content:encoded>` com o HTML completo do
-post. O feed inclui `<generator>moang-blog</generator>`, `ETag` forte com
+Markdown. Notas (`kind = "microblog"`) ficam fora do feed. O XML é montado a
+partir do banco a cada requisição, então novos artigos entram automaticamente.
+Cada item também traz `<content:encoded>` com o HTML completo do post. O feed inclui `<generator>moang-blog</generator>`, `ETag` forte com
 `If-None-Match` (responde `304 Not Modified`) e `Cache-Control: public,
 max-age=300`. O header do site e o `<link rel="alternate">` do `index.html`
 apontam para ele. No nginx de exemplo, `/feed.xml` precisa ser proxyado para o

@@ -17,8 +17,11 @@ const FEED_LIMIT: i64 = 20;
 const DESCRIPTION_LIMIT: usize = 400;
 const CACHE_CONTROL: &str = "public, max-age=300";
 
-/// RSS 2.0 feed with the public posts. The header and `index.html` already
+/// RSS 2.0 feed with the public articles. The header and `index.html` already
 /// advertise `/feed.xml`; this is the endpoint behind that link.
+///
+/// The XML is built from the database on every request, so new articles show
+/// up automatically. Notes (`kind = "microblog"`) are intentionally excluded.
 #[get("/feed.xml")]
 pub async fn feed(req: HttpRequest) -> HttpResponse {
     use crate::schema::posts::dsl;
@@ -27,6 +30,7 @@ pub async fn feed(req: HttpRequest) -> HttpResponse {
     let connection = &mut establish_connection();
     let query = dsl::posts
         .filter(dsl::is_public.eq(true))
+        .filter(dsl::kind.eq("article"))
         .order((dsl::created_at.desc(), dsl::id.desc()))
         .limit(FEED_LIMIT)
         .select(Post::as_select())
