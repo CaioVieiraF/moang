@@ -12,7 +12,7 @@ on:
   workflow_dispatch:
 
 env:
-  IMAGE: ghcr.io/caiovieirafernandes/moang-backend
+  IMAGE: ghcr.io/caiovieiraf/moang-backend
 
 permissions:
   contents: read
