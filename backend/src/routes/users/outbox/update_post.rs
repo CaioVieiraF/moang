@@ -8,7 +8,7 @@ use tokio::fs::write;
 
 use crate::{
     current_user_id, establish_connection,
-    models::Post,
+    models::{GetPost, Post},
     routes::users::outbox::publish::publish_update,
     user_is_loged_in,
 };
@@ -96,7 +96,7 @@ pub async fn update_post(
                 post.title, post.body
             );
             let _ = write(format!("content/{}.gmi", post.slug), gemini_content).await;
-            HttpResponse::Ok().json(Json(post))
+            HttpResponse::Ok().json(Json(GetPost::from(&post)))
         }
         Err(error) => HttpResponse::InternalServerError().body(error.to_string()),
     }
