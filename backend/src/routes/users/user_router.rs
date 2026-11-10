@@ -1,6 +1,9 @@
 use actix_web::{web, Scope};
 
-use super::{followers, following, get_user, inbox, outbox, posts, timeline, update_profile};
+use super::{
+    follow_requests, followers, following, get_user, inbox, outbox, posts, timeline,
+    update_profile,
+};
 
 pub fn user_router() -> Scope {
     web::scope("{user_name}")
@@ -10,6 +13,9 @@ pub fn user_router() -> Scope {
         .service(following::get_following)
         .service(following::follow)
         .service(following::unfollow)
+        .service(follow_requests::list_follow_requests)
+        .service(follow_requests::accept_follow_request)
+        .service(follow_requests::reject_follow_request)
         .service(posts::get_object)
         .service(posts::get_replies)
         .service(posts::get_likes)
