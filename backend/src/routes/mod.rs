@@ -4,6 +4,7 @@ mod login;
 mod logout;
 mod me;
 mod nodeinfo;
+mod pagination;
 mod posts;
 mod users;
 mod webfinger;

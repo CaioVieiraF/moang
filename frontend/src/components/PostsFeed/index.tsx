@@ -57,6 +57,12 @@ function isNote(post: PostObject) {
   return post.object.type === 'Note'
 }
 
+/** The API returns absolute links; axios only needs the path and query. */
+function toApiPath(url: string) {
+  const parsed = new URL(url)
+  return `${parsed.pathname}${parsed.search}`
+}
+
 function countLabel(count: number, tab: TabDefinition) {
   const noun = count === 1
     ? tab.singular
@@ -78,8 +84,23 @@ export function PostsFeed() {
   async function getPosts() {
     setState('loading')
     try {
-      const response = await api.get(userEndpoint('/outbox/posts'))
-      setPosts(response.data)
+      const allPosts: PostObject[] = []
+      let path = userEndpoint('/outbox/posts')
+
+      // The public feed follows every page: search and the tab counts must
+      // cover all posts, not only the first page.
+      while (path) {
+        const response = await api.get<OrderedCollectionPage>(path)
+        allPosts.push(...response.data.orderedItems)
+        path = response.data.next
+          ? toApiPath(response.data.next)
+          : ''
+      }
+
+      setPosts({
+        totalItems: allPosts.length,
+        orderedItems: allPosts,
+      })
       setState('ready')
     } catch {
       setState('error')

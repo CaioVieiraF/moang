@@ -42,5 +42,7 @@ export interface PostObject {
 
 export interface OrderedCollectionPage {
   totalItems: number,
+  next?: string,
+  prev?: string,
   orderedItems: PostObject[]
 }
