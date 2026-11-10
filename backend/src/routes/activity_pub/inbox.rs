@@ -19,7 +19,7 @@ use crate::{
             delivery::{backfill_for_follower, enqueue_activity, new_activity_id, save_activity},
             fetch::{fetch_remote_actor, validate_remote_url},
             signature::{signature_key_id, verify_request},
-            Context, ObjType,
+            Context,
         },
         users::has_user,
     },
@@ -182,7 +182,7 @@ fn handle_follow(
         .map_err(|error| error.to_string())?;
 
     if accepted {
-        send_accept(payload, local_user, remote_actor)?;
+        send_follow_response(payload, "Accept", local_user, remote_actor)?;
         match backfill_for_follower(local_user, &remote_actor.inbox_url) {
             Ok(count) => log::info!("backfilled {count} posts for {}", remote_actor.id),
             Err(error) => log::warn!("could not backfill posts for {}: {error}", remote_actor.id),
@@ -192,8 +192,9 @@ fn handle_follow(
     Ok(())
 }
 
-fn send_accept(
+pub(crate) fn send_follow_response(
     follow: &Value,
+    response_type: &str,
     local_user: &User,
     remote_actor: &RemoteActor,
 ) -> Result<(), String> {
@@ -203,7 +204,7 @@ fn send_accept(
     let payload = json!({
         "@context": Context::activity_streams(),
         "id": activity_id,
-        "type": ObjType::Accept,
+        "type": response_type,
         "actor": config.actor_url(&local_user.name),
         "object": follow,
         "to": [remote_actor.id],
@@ -213,7 +214,7 @@ fn send_accept(
         &activity_id,
         Some(&local_user.id),
         &config.actor_url(&local_user.name),
-        "Accept",
+        response_type,
         Some(&follow_id),
         "out",
         payload,

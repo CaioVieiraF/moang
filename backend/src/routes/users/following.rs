@@ -227,7 +227,7 @@ pub async fn unfollow(
     HttpResponse::NoContent().finish()
 }
 
-fn owns_account(session: &Session, user: &User) -> bool {
+pub(super) fn owns_account(session: &Session, user: &User) -> bool {
     current_user_id(session).as_deref() == Some(user.id.as_str())
 }
 

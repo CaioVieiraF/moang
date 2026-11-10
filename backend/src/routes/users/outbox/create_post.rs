@@ -1,6 +1,6 @@
 use crate::{
     current_user, establish_connection,
-    models::{NewPost, Post},
+    models::{GetPost, NewPost, Post},
     user_is_loged_in,
 };
 use actix_session::Session;
@@ -89,7 +89,7 @@ pub async fn create_post(
 
     crate::routes::users::outbox::publish::publish_post(&post, &post.author);
 
-    HttpResponse::Created().finish()
+    HttpResponse::Created().json(Json(GetPost::from(&post)))
 }
 
 async fn create_gemini_post(post: &NewPost) -> tokio::io::Result<()> {
