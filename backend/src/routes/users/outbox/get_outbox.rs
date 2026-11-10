@@ -28,7 +28,7 @@ pub async fn get_outbox(path: Path<String>) -> HttpResponse {
             let all_posts = OrderedCollectionBuilder::new()
                 .id(config.outbox_url(&username))
                 .total_items(total_items)
-                .first("posts")
+                .first("posts?page=1")
                 .build();
 
             HttpResponse::Ok()

@@ -59,8 +59,18 @@ server {
         include /etc/nginx/proxy_params;
     }
 
-    # Admin/login routes still live at the backend root
+    # Session routes live at the backend root
     location = /login {
+        proxy_pass http://127.0.0.1:5000;
+        include /etc/nginx/proxy_params;
+    }
+
+    location = /logout {
+        proxy_pass http://127.0.0.1:5000;
+        include /etc/nginx/proxy_params;
+    }
+
+    location = /me {
         proxy_pass http://127.0.0.1:5000;
         include /etc/nginx/proxy_params;
     }

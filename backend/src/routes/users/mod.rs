@@ -1,5 +1,6 @@
 mod create_user;
 mod delete_user;
+mod follow_requests;
 mod followers;
 mod following;
 mod get_user;
