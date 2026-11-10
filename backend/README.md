@@ -116,8 +116,9 @@ ferramentas e diretórios a descobrir que o blog fala ActivityPub.
 - `application/json` (o frontend): devolve o JSON compacto com `actor`,
   `avatarUrl` e as contagens que os cards exibem.
 
-`/timeline` é um endpoint JSON da aplicação, mantido sem link público no
-frontend para uma futura visualização autenticada.
+`/timeline` é um endpoint JSON da aplicação que exige sessão do dono da conta
+(401 sem login, 403 para outra conta). Ele é consumido pelo app de escrita
+separado; este frontend é somente de leitura e não tem página de timeline.
 
 ### Inbox e ações autenticadas
 
@@ -125,10 +126,13 @@ frontend para uma futura visualização autenticada.
 | --- | --- | --- |
 | POST | `/users/{username}/inbox` | Inbox pessoal (ActivityPub) |
 | POST | `/inbox` | Shared inbox (ActivityPub) |
-| POST | `/users/{username}/outbox` | Cria post (sessão), com `kind`: `article` ou `microblog` |
+| POST | `/users/{username}/outbox` | Cria post (sessão), com `kind`: `article` ou `microblog`, e devolve o post criado |
 | PUT | `/users/{username}/outbox/posts/{id}` | Atualização parcial do post e federa `Update` (sessão) |
 | POST | `/users/{username}/following` | Segue um ator remoto (sessão), corpo `{"actor":"https://..."}` |
 | DELETE | `/users/{username}/following` | Deixa de seguir (sessão), mesmo corpo |
+| GET | `/users/{username}/follow-requests` | Pedidos de seguir pendentes em perfil travado (sessão) |
+| POST | `/users/{username}/follow-requests/accept` | Aceita um pedido, corpo `{"actor":"https://..."}`, envia `Accept` e faz o backfill (sessão) |
+| POST | `/users/{username}/follow-requests/reject` | Recusa um pedido, mesmo corpo, remove o seguidor e envia `Reject` (sessão) |
 | PUT | `/users/{username}/profile` | Atualiza perfil e federa `Update` do ator (sessão) |
 
 Todas as ações autenticadas conferem não só a sessão, mas também se o recurso
@@ -240,6 +244,11 @@ backend (por causa do fallback do SPA).
 
 ## Frontend
 
+Este frontend é somente de leitura pública: Home, Post, About e o feed RSS.
+Login, publicação, edição, aprovação de seguidores, timeline e demais
+interações pertencem a um app de escrita separado. O contrato que esse app
+consome está em [../docs/api-client.md](../docs/api-client.md).
+
 O frontend lê `VITE_API_BASEURL` e `VITE_BLOG_USERNAME` (padrão `caio`). Todas
 as chamadas passam por `userEndpoint()` em `src/lib/blog.ts`, então trocar o
 username não exige editar página por página.
@@ -299,5 +308,9 @@ perfil pelo Mastodon; o Follow chega no inbox, é aceito e o `Accept` é enviado
 - As chaves privadas ficam no banco em texto puro. Isso é aceitável para uma
   instância pessoal, mas o ideal futuro é usar um secret manager ou criptografia
   em repouso.
-- `is_locked` ainda não tem uma tela de aprovação de seguidores. Quando o perfil
-  não é travado, o Follow é aceito automaticamente.
+- Quando o perfil é travado (`is_locked`), o Follow fica pendente até ser aprovado
+  pelas rotas `follow-requests`. Quando não é travado, o Follow é aceito
+  automaticamente. A aprovação fica no app de escrita separado.
+- Apagar um usuário remove os posts dele e as respostas e interações ligadas a
+  eles, mas não federa `Delete`: as entregas ficam na fila que é apagada junto
+  com a conta.
