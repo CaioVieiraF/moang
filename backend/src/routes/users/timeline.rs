@@ -1,5 +1,9 @@
 use actix_session::Session;
-use actix_web::{get, web::Json, web::Path, HttpResponse};
+use actix_web::{
+    get,
+    web::{Json, Path, Query},
+    HttpResponse,
+};
 use chrono::{DateTime, Utc};
 use diesel::prelude::*;
 use serde::Serialize;
@@ -9,7 +13,10 @@ use crate::{
     config::AppConfig,
     establish_connection,
     models::{RemoteActor, RemotePost, User},
-    routes::users::{following::owns_account, has_user},
+    routes::{
+        pagination::{PageQuery, PAGE_SIZE},
+        users::{following::owns_account, has_user},
+    },
     schema::{following, posts, remote_actors, remote_posts},
     user_is_loged_in,
 };
@@ -74,14 +81,26 @@ impl RemotePostView {
 #[derive(Serialize)]
 pub struct Timeline {
     #[serde(rename = "totalItems")]
-    pub total_items: usize,
+    pub total_items: i64,
+
+    pub page: i64,
+
+    #[serde(rename = "perPage")]
+    pub per_page: i64,
+
+    #[serde(rename = "nextPage", skip_serializing_if = "Option::is_none")]
+    pub next_page: Option<i64>,
 
     #[serde(rename = "orderedItems")]
     pub ordered_items: Vec<RemotePostView>,
 }
 
 #[get("/timeline")]
-pub async fn get_timeline(session: Session, path: Path<String>) -> HttpResponse {
+pub async fn get_timeline(
+    session: Session,
+    path: Path<String>,
+    query: Query<PageQuery>,
+) -> HttpResponse {
     if !user_is_loged_in(&session) {
         return HttpResponse::Unauthorized().finish();
     }
@@ -94,6 +113,9 @@ pub async fn get_timeline(session: Session, path: Path<String>) -> HttpResponse 
         return HttpResponse::Forbidden().finish();
     }
 
+    let page = query.page();
+    let offset = query.offset();
+
     let connection = &mut establish_connection();
     let followed = match followed_actors(&user, connection) {
         Ok(followed) => followed,
@@ -104,6 +126,20 @@ pub async fn get_timeline(session: Session, path: Path<String>) -> HttpResponse 
         Err(error) => return HttpResponse::InternalServerError().body(error.to_string()),
     };
 
+    let total_items = match remote_posts::table
+        .inner_join(remote_actors::table)
+        .filter(
+            remote_posts::actor_id
+                .eq_any(&followed)
+                .or(remote_posts::in_reply_to.eq_any(&local_objects)),
+        )
+        .count()
+        .get_result::<i64>(connection)
+    {
+        Ok(total) => total,
+        Err(error) => return HttpResponse::InternalServerError().body(error.to_string()),
+    };
+
     let rows = remote_posts::table
         .inner_join(remote_actors::table)
         .filter(
@@ -111,8 +147,9 @@ pub async fn get_timeline(session: Session, path: Path<String>) -> HttpResponse 
                 .eq_any(&followed)
                 .or(remote_posts::in_reply_to.eq_any(&local_objects)),
         )
-        .order(remote_posts::published.desc())
-        .limit(100)
+        .order((remote_posts::published.desc(), remote_posts::id.desc()))
+        .offset(offset)
+        .limit(PAGE_SIZE)
         .select((RemotePost::as_select(), RemoteActor::as_select()))
         .load::<(RemotePost, RemoteActor)>(connection);
 
@@ -123,8 +160,13 @@ pub async fn get_timeline(session: Session, path: Path<String>) -> HttpResponse 
                 .map(|(post, actor)| RemotePostView::new(post, actor))
                 .collect::<Vec<RemotePostView>>();
 
+            let next_page = (offset + PAGE_SIZE < total_items).then_some(page + 1);
+
             HttpResponse::Ok().json(Json(Timeline {
-                total_items: ordered_items.len(),
+                total_items,
+                page,
+                per_page: PAGE_SIZE,
+                next_page,
                 ordered_items,
             }))
         }
