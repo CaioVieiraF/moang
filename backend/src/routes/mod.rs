@@ -2,6 +2,7 @@ pub mod activity_pub;
 mod feed;
 mod login;
 mod logout;
+mod me;
 mod nodeinfo;
 mod posts;
 mod users;
@@ -20,6 +21,7 @@ pub fn router() -> Scope {
         .service(nodeinfo::nodeinfo)
         .service(login::login)
         .service(logout::logout)
+        .service(me::me)
         .service(feed::feed)
         .service(activity_pub::inbox::shared_inbox)
         .service(users::users_router())
