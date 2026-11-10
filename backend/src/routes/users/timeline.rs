@@ -1,3 +1,4 @@
+use actix_session::Session;
 use actix_web::{get, web::Json, web::Path, HttpResponse};
 use chrono::{DateTime, Utc};
 use diesel::prelude::*;
@@ -8,8 +9,9 @@ use crate::{
     config::AppConfig,
     establish_connection,
     models::{RemoteActor, RemotePost, User},
-    routes::users::has_user,
+    routes::users::{following::owns_account, has_user},
     schema::{following, posts, remote_actors, remote_posts},
+    user_is_loged_in,
 };
 
 #[derive(Serialize)]
@@ -79,11 +81,18 @@ pub struct Timeline {
 }
 
 #[get("/timeline")]
-pub async fn get_timeline(path: Path<String>) -> HttpResponse {
+pub async fn get_timeline(session: Session, path: Path<String>) -> HttpResponse {
+    if !user_is_loged_in(&session) {
+        return HttpResponse::Unauthorized().finish();
+    }
+
     let username = path.into_inner().to_lowercase();
     let Some(user) = has_user(username.clone()) else {
         return HttpResponse::NotFound().finish();
     };
+    if !owns_account(&session, &user) {
+        return HttpResponse::Forbidden().finish();
+    }
 
     let connection = &mut establish_connection();
     let followed = match followed_actors(&user, connection) {
