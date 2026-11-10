@@ -19,6 +19,14 @@ cp ../.env.example ../.env
 docker compose -f ../docker-compose.yaml up -d --build
 ```
 
+Depois de alterar o código do backend, use `--build` de novo. Rodar o compose
+sem `--build` apenas reinicia o container com a imagem antiga, e rotas novas
+continuam respondendo `404`:
+
+```bash
+docker compose -f ../docker-compose.yaml up -d --build backend backend-dev
+```
+
 As migrations são executadas automaticamente na inicialização. O worker de
 entregas também é iniciado automaticamente (`AP_WORKER_ENABLED=true`).
 
