@@ -62,7 +62,7 @@ pub async fn delete_post(session: Session, path: Path<i32>) -> HttpResponse {
 
 /// Replies and reactions received for a local object are useless once the
 /// object is gone, so they are removed together with the post.
-fn cleanup_remote_data(
+pub(crate) fn cleanup_remote_data(
     connection: &mut diesel::PgConnection,
     post: &Post,
 ) -> Result<(), diesel::result::Error> {
@@ -82,7 +82,7 @@ fn cleanup_remote_data(
     Ok(())
 }
 
-async fn delete_gemini_post(post_slug: String) -> tokio::io::Result<()> {
+pub(crate) async fn delete_gemini_post(post_slug: String) -> tokio::io::Result<()> {
     remove_file(format!("content/{post_slug}.gmi")).await?;
 
     let gemini_index = match read_to_string("content/index.gmi").await {

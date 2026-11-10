@@ -1,4 +1,4 @@
-mod delete_post;
+pub(crate) mod delete_post;
 mod make_public;
 
 use actix_web::{web, Scope};
