@@ -157,7 +157,7 @@ Resposta: `200` com o post no mesmo formato da criação, com datas em ISO 8601.
 
 Trocar o `title` **não** recalcula o `slug`.
 
-### `GET /users/{username}/outbox/posts`
+### `GET /users/{username}/outbox/posts?page=N`
 
 Lista os posts públicos e não listados (`is_public = true`) como
 `OrderedCollectionPage` de atividades `Create`. Não exige sessão.
@@ -165,7 +165,26 @@ Lista os posts públicos e não listados (`is_public = true`) como
 - O Markdown completo está em `orderedItems[].object.source.content`.
 - Posts `private` e `followers` **não aparecem** nesta lista. Para editar um
   rascunho, guarde o `id` devolvido na criação.
-- Não há paginação: devolve todos.
+- Paginação fixa de 20 itens por página. `page` começa em 1 e, se omitido ou
+  inválido, usa a primeira página.
+- `totalItems` é o total de posts, não o tamanho da página.
+- `next` e `prev` são URLs absolutas para a próxima página e a anterior; o campo
+  ausente indica que não há mais páginas naquela direção.
+- A coleção raiz (`/outbox`) aponta `first` para `posts?page=1`.
+
+```json
+{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "type": "OrderedCollectionPage",
+  "id": "https://moang.com.br/users/caio/outbox/posts?page=1",
+  "totalItems": 34,
+  "partOf": "https://moang.com.br/users/caio/outbox",
+  "next": "https://moang.com.br/users/caio/outbox/posts?page=2",
+  "orderedItems": []
+}
+```
+
+Para percorrer tudo, siga `next` até ele não existir.
 
 ### `GET /users/{username}/outbox/posts/{id}`
 
@@ -282,15 +301,22 @@ Mesmo corpo. Remove o seguidor e envia `Reject`. Resposta: `204`.
 
 ## Timeline
 
-### `GET /users/{username}/timeline`
+### `GET /users/{username}/timeline?page=N`
 
 Exige sessão e que a conta seja a do usuário logado. Devolve os posts remotos
-de atores seguidos e as respostas a posts locais, mais recentes primeiro, até
-100 itens.
+de atores seguidos e as respostas a posts locais, mais recentes primeiro.
+
+- Paginação fixa de 20 itens por página. `page` começa em 1 e, se omitido ou
+  inválido, usa a primeira página.
+- `totalItems` é o total de itens, não o tamanho da página.
+- `nextPage` é o número da próxima página; o campo ausente indica o fim.
 
 ```json
 {
   "totalItems": 1,
+  "page": 1,
+  "perPage": 20,
+  "nextPage": 2,
   "orderedItems": [
     {
       "id": "https://mastodon.social/users/ana/statuses/1",
@@ -338,8 +364,7 @@ RSS 2.0 público dos artigos (`kind = "article"`), até 20 itens. Não exige ses
    vazio). Avatares e banner são apenas URLs externas.
 2. **Sem interações de saída.** Não há endpoint para curtir, repostar ou
    responder a um post remoto; o backend só ingere essas atividades.
-3. **Sem paginação** no outbox e na timeline (limite de 100 na timeline).
-4. **Sem bearer token.** Apenas cookie de sessão.
+3. **Sem bearer token.** Apenas cookie de sessão.
 
 ## Exemplo mínimo
 
@@ -355,10 +380,11 @@ await fetch(`${api}/login`, {
 
 const me = await fetch(`${api}/me`, { credentials: 'include' }).then(r => r.json())
 
-const response = await fetch(`${api}/users/caio/timeline`, {
+const response = await fetch(`${api}/users/caio/timeline?page=1`, {
   credentials: 'include',
 })
 const timeline = await response.json()
+// Segue nextPage até ele não existir.
 
 await fetch(`${api}/logout`, { method: 'POST', credentials: 'include' })
 ```

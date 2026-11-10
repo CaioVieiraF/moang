@@ -99,7 +99,7 @@ ferramentas e diretórios a descobrir que o blog fala ActivityPub.
 | --- | --- | --- |
 | GET | `/users/{username}` | Ator `Person` com chave pública |
 | GET | `/users/{username}/outbox` | Coleção do outbox |
-| GET | `/users/{username}/outbox/posts` | Página com atividades `Create` |
+| GET | `/users/{username}/outbox/posts` | Página com atividades `Create` (`?page=N`, 20 por página) |
 | GET | `/users/{username}/outbox/posts/{id}` | Atividade `Create` por id numérico |
 | GET | `/users/{username}/followers` | Seguidores aceitos |
 | GET | `/users/{username}/following` | Perfis seguidos aceitos |
@@ -112,7 +112,7 @@ ferramentas e diretórios a descobrir que o blog fala ActivityPub.
 | GET | `/users/{username}/posts/{uuid}/replies` | Respostas remotas ao post |
 | GET | `/users/{username}/posts/{uuid}/likes` | Atores que curtiram o post |
 | GET | `/users/{username}/posts/{uuid}/shares` | Atores que repostaram o post |
-| GET | `/users/{username}/timeline` | Posts remotos recebidos, mais recentes primeiro |
+| GET | `/users/{username}/timeline` | Posts remotos recebidos, mais recentes primeiro (`?page=N`, 20 por página) |
 
 `/likes`, `/shares` e `/replies` são coleções `OrderedCollection` com
 `@context`. A coleção de respostas negocia pelo cabeçalho `Accept`:
@@ -127,6 +127,8 @@ ferramentas e diretórios a descobrir que o blog fala ActivityPub.
 `/timeline` é um endpoint JSON da aplicação que exige sessão do dono da conta
 (401 sem login, 403 para outra conta). Ele é consumido pelo app de escrita
 separado; este frontend é somente de leitura e não tem página de timeline.
+Aceita `?page=N` (20 itens por página) e devolve `totalItems`, `page`, `perPage`,
+`nextPage` e `orderedItems`.
 
 ### Sessão
 
@@ -306,6 +308,7 @@ Checklist:
 curl -s 'https://moang.com.br/.well-known/webfinger?resource=acct:caio@moang.com.br' | jq
 curl -s https://moang.com.br/users/caio | jq
 curl -s https://moang.com.br/users/caio/outbox/posts | jq
+curl -s 'https://moang.com.br/users/caio/outbox/posts?page=2' | jq
 curl -s https://moang.com.br/feed.xml
 curl -s -H 'Accept: application/activity+json' \
   https://moang.com.br/users/caio/posts/{uuid}/replies | jq
