@@ -26,8 +26,9 @@ api.defaults.withCredentials = true
 fetch(url, { credentials: 'include' })
 ```
 
-Não há token no corpo da resposta nem endpoint de logout. As rotas autenticadas
-conferem a sessão **e** se o recurso pertence ao usuário logado.
+Não há token no corpo da resposta; a sessão é encerrada por `POST /logout`. As
+rotas autenticadas conferem a sessão **e** se o recurso pertence ao usuário
+logado.
 
 ### Origens e CORS
 
@@ -70,6 +71,30 @@ Os corpos de erro são vazios ou texto simples, não JSON estruturado.
 | `500` | Erro interno |
 
 A sessão expira em 1 dia.
+
+### `POST /logout`
+
+Encerra a sessão e remove o cookie. Resposta: `204` sem corpo. Não exige corpo.
+
+### `GET /me`
+
+Devolve o usuário logado. Resposta: `200` com os dados abaixo, ou `401` sem
+sessão.
+
+```json
+{
+  "id": "4f0c...",
+  "name": "caio",
+  "email": "caio@moang.com.br",
+  "display_name": "Caio",
+  "summary": "Bio",
+  "avatar_url": "https://moang.com.br/profile.jpg",
+  "header_url": "https://moang.com.br/banner.jpg",
+  "created_at": "2024-09-18T00:00:00+00:00",
+  "is_locked": false,
+  "is_discoverable": true
+}
+```
 
 ## Posts
 
@@ -309,15 +334,12 @@ RSS 2.0 público dos artigos (`kind = "article"`), até 20 itens. Não exige ses
 
 ## Lacunas conhecidas (antes de construir o app)
 
-1. **Sem logout.** Não há como encerrar a sessão pelo servidor.
-2. **Sem `GET /me`.** O app não tem como descobrir o usuário logado; hoje só
-   comparando o e-mail do login com o ator.
-3. **Sem upload nem anexos.** Posts não suportam mídia (`attachment` é sempre
+1. **Sem upload nem anexos.** Posts não suportam mídia (`attachment` é sempre
    vazio). Avatares e banner são apenas URLs externas.
-4. **Sem interações de saída.** Não há endpoint para curtir, repostar ou
+2. **Sem interações de saída.** Não há endpoint para curtir, repostar ou
    responder a um post remoto; o backend só ingere essas atividades.
-5. **Sem paginação** no outbox e na timeline (limite de 100 na timeline).
-6. **Sem bearer token.** Apenas cookie de sessão.
+3. **Sem paginação** no outbox e na timeline (limite de 100 na timeline).
+4. **Sem bearer token.** Apenas cookie de sessão.
 
 ## Exemplo mínimo
 
@@ -331,8 +353,12 @@ await fetch(`${api}/login`, {
   body: JSON.stringify({ email, password }),
 })
 
+const me = await fetch(`${api}/me`, { credentials: 'include' }).then(r => r.json())
+
 const response = await fetch(`${api}/users/caio/timeline`, {
   credentials: 'include',
 })
 const timeline = await response.json()
+
+await fetch(`${api}/logout`, { method: 'POST', credentials: 'include' })
 ```

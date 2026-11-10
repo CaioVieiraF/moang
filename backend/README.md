@@ -120,6 +120,14 @@ ferramentas e diretórios a descobrir que o blog fala ActivityPub.
 (401 sem login, 403 para outra conta). Ele é consumido pelo app de escrita
 separado; este frontend é somente de leitura e não tem página de timeline.
 
+### Sessão
+
+| Método | Caminho | Descrição |
+| --- | --- | --- |
+| POST | `/login` | Autentica com `email` e `password` e cria a sessão |
+| POST | `/logout` | Encerra a sessão |
+| GET | `/me` | Dados do usuário logado (sessão) |
+
 ### Inbox e ações autenticadas
 
 | Método | Caminho | Descrição |
